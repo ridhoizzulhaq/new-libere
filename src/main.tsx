@@ -6,6 +6,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import AuthScreen from "./pages/AuthScreen.tsx";
 import LibraryScreen from "./pages/LibraryScreen.tsx";
 import HomeScreen from "./pages/HomeScreen.tsx";
+import CreateBookScreen from "./pages/CreateBookScreen.tsx";
 
 const router = createBrowserRouter([
   {
@@ -23,6 +24,10 @@ const router = createBrowserRouter([
   {
     path: "/libraries",
     element: <LibraryScreen />,
+  },
+  {
+    path: "/create-book",
+    element: <CreateBookScreen />,
   },
 ]);
 
