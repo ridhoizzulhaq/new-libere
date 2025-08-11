@@ -2,9 +2,6 @@ import AuthLayout from "../components/layouts/AuthLayout";
 import GoogleAuthButton from "../components/buttons/GoogleAuthButton";
 
 const AuthScreen = () => {
-  const handleGoogleSignIn = () => {
-    console.log("Google sign-in clicked");
-  };
   return (
     <AuthLayout>
       <div className="flex flex-col justify-center items-center">
@@ -16,10 +13,7 @@ const AuthScreen = () => {
 
       <div className="w-full mt-4 flex-col items-start">
         <div className="flex flex-col items-center">
-          <GoogleAuthButton
-            text="Sign Up with Google"
-            onClick={handleGoogleSignIn}
-          />
+          <GoogleAuthButton />
 
           <div className="mx-auto max-w-xs">
             <p className="mt-6 text-xs text-gray-600 text-center">
