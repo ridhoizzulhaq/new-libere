@@ -67,14 +67,10 @@ const CreateBookScreen = () => {
         onSubmit={handleSubmit}
         className="bg-white shadow-lg rounded-lg p-8 w-full max-w-md space-y-6"
       >
-        <h2 className="text-2xl font-bold text-gray-800 text-center">
-          Add New Item
-        </h2>
+        <h2 className="text-2xl font-bold text-center">Add New Item</h2>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Title
-          </label>
+          <label className="block text-sm font-medium">Title</label>
           <input
             type="text"
             name="title"
@@ -82,15 +78,11 @@ const CreateBookScreen = () => {
             onChange={handleChange}
             placeholder="Enter title"
             required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            className="mt-1 block w-full"
           />
         </div>
-
-        {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Description
-          </label>
+          <label className="block text-sm font-medium">Description</label>
           <textarea
             name="description"
             value={formData.description}
@@ -98,15 +90,12 @@ const CreateBookScreen = () => {
             placeholder="Enter description"
             rows={3}
             required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            className="mt-1 block w-full"
           />
         </div>
 
-        {/* Image */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Image
-          </label>
+          <label className="block text-sm font-medium">Image</label>
           <input
             type="file"
             name="image"
@@ -117,11 +106,8 @@ const CreateBookScreen = () => {
           />
         </div>
 
-        {/* EPUB */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            EPUB File
-          </label>
+          <label className="block text-sm font-medium">EPUB File</label>
           <input
             type="file"
             name="epub"
@@ -132,11 +118,8 @@ const CreateBookScreen = () => {
           />
         </div>
 
-        {/* Price */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Price
-          </label>
+          <label className="block text-sm font-medium">Price</label>
           <input
             type="number"
             name="price"
@@ -145,14 +128,12 @@ const CreateBookScreen = () => {
             step="0.01"
             placeholder="Enter price"
             required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            className="mt-1 block w-full"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Royalty Value
-          </label>
+          <label className="block text-sm font-medium">Royalty Value</label>
           <input
             type="number"
             name="royaltyValue"
@@ -162,11 +143,10 @@ const CreateBookScreen = () => {
             max="100"
             placeholder="Enter royaltyValue"
             required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            className="mt-1 block w-full"
           />
         </div>
 
-        {/* Submit */}
         <button
           type="submit"
           className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md shadow hover:bg-indigo-700 focus:outline-none"
