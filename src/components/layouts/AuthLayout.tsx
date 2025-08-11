@@ -1,59 +1,24 @@
 import React from "react";
-import GoogleAuthButton from "../buttons/GoogleAuthButton";
 
-const AuthLayout = () => {
-  const handleGoogleSignIn = () => {
-    console.log("Google sign-in clicked");
-    // TODO: tambahkan logika auth
-  };
+interface AuthLayoutProps {
+  children: React.ReactNode;
+  illustration?: string;
+}
+
+const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
+  const authImage = "/images/auth-illustration.png";
   return (
     <main className="w-screen h-screen overflow-hidden bg-gray-100 text-gray-900 flex justify-center items-center">
-      <div className="max-w-screen-xl m-0 sm:m-10 bg-white shadow sm:rounded-lg flex justify-center flex-1">
-        <section className="lg:w-1/2 xl:w-5/12 p-6 sm:p-12">
-          <div className="flex flex-col">
-            <span className="text-2xl xl:text-3xl font-extrabold">Libere.</span>
-            <p className="text-sm mt-2 text-zinc-600">
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Eos
-              explicabo ullam reiciendis tempore incidunt rem corrupti optio nam
-              repellat. Voluptates.
-            </p>
-          </div>
-          <div className="w-full mt-4 flex-1 flex-col items-start">
-            <div className="flex flex-col items-center">
-              <GoogleAuthButton
-                text="Sign Up with Google"
-                onClick={handleGoogleSignIn}
-              />
+      <div className="max-w-screen-xl max-h-[80vh] m-0 sm:m-10 bg-white shadow sm:rounded-lg flex justify-center flex-1">
+        <section className="lg:w-1/2 xl:w-5/12 p-6 sm:p-12">{children}</section>
 
-              <div className="mx-auto max-w-xs">
-                <p className="mt-6 text-xs text-gray-600 text-center">
-                  I agree to abide by templatana's
-                  <a
-                    href="#"
-                    className="border-b border-gray-500 border-dotted"
-                  >
-                    Terms of Service
-                  </a>
-                  and its
-                  <a
-                    href="#"
-                    className="border-b border-gray-500 border-dotted"
-                  >
-                    Privacy Policy
-                  </a>
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-        <section className="flex-1 bg-indigo-100 text-center hidden lg:flex">
-          <div
-            className="m-12 xl:m-16 w-full bg-contain bg-center bg-no-repeat"
-            style={{
-              backgroundImage: "url('/images/auth-illustration.png')",
-            }}
-          ></div>
-        </section>
+        <div className="flex-1 text-center hidden lg:flex p-4">
+          <img
+            src={authImage}
+            alt="Libere Background"
+            className="w-full h-full object-cover rounded-lg"
+          />
+        </div>
       </div>
     </main>
   );
