@@ -1,17 +1,19 @@
-import {PrivyProvider} from '@privy-io/react-auth';
+import { PrivyProvider } from "@privy-io/react-auth";
 
-export default function Providers({children}: {children: React.ReactNode}) {
+export default function Providers({ children }: { children: React.ReactNode }) {
+  const privyAppId = process.env.PRIVY_APP_ID!;
+  const privyClientId = process.env.PRIVY_CLIENT_ID!;
   return (
     <PrivyProvider
-      appId="cme6d96ra000tjv0b6f1j1l2d"
-      clientId="client-WY6PeMCbVqVbExc1z8WNP2HLomoNnEjB96HHnd8oLYaJp"
+      appId={privyAppId}
+      clientId={privyClientId}
       config={{
         // Create embedded wallets for users who don't have a wallet
         embeddedWallets: {
           ethereum: {
-            createOnLogin: 'users-without-wallets'
-          }
-        }
+            createOnLogin: "users-without-wallets",
+          },
+        },
       }}
     >
       {children}
