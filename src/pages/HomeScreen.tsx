@@ -1,9 +1,12 @@
-import React from 'react'
+import HomeLayout from "../components/layouts/HomeLayout";
+import BookOverview from "../components/BookOverview";
 
 const HomeScreen = () => {
   return (
-    <div>HomeScreen</div>
-  )
-}
+    <HomeLayout>
+      <BookOverview />
+    </HomeLayout>
+  );
+};
 
-export default HomeScreen
+export default HomeScreen;
