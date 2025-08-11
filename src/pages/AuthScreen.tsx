@@ -7,14 +7,14 @@ const AuthScreen = () => {
   };
   return (
     <AuthLayout>
-      <div className="flex flex-col">
+      <div className="flex flex-col justify-center items-center">
         <span className="text-2xl xl:text-3xl font-extrabold">Libere.</span>
         <p className="text-sm mt-2 text-zinc-600">
           Lorem ipsum, dolor sit amet consectetur adipisicing elit.
         </p>
       </div>
 
-      <div className="w-full mt-4 flex-1 flex-col items-start">
+      <div className="w-full mt-4 flex-col items-start">
         <div className="flex flex-col items-center">
           <GoogleAuthButton
             text="Sign Up with Google"
