@@ -1,37 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
+import { contractABI, contractAddress } from "../smart-contract.abi";
+import axios from "axios";
+import config from "../libs/config";
 
 const CreateBookScreen = () => {
   const myWalletAddress = "0x96D7Eb053e57b81cff04F620613838Fd2224eb9c";
   const { wallets } = useWallets();
-
-  useEffect(() => {
-    const setup = async () => {
-      const wallet = wallets.find(
-        (wallet) => wallet.address === myWalletAddress
-      );
-
-      if (!wallet) {
-        console.warn("Wallet not found");
-        return;
-      }
-
-      const provider = await wallet.getEthereumProvider();
-      if (!provider) {
-        console.warn("Provider not found");
-        return;
-      }
-
-      const ethersProvider = new ethers.BrowserProvider(provider);
-      const signer = await ethersProvider.getSigner();
-
-      console.warn("signer", signer);
-    };
-
-    setup();
-  }, [wallets]);
-
+  const [loading, setLoading] = useState(false);
+  const [signer, setSigner] = useState<ethers.Signer | null>(null);
+  const [contract, setContract] = useState<ethers.Contract | null>(null);
+  const [account, setAccount] = useState<string>("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -40,6 +21,92 @@ const CreateBookScreen = () => {
     price: "",
     royaltyValue: "",
   });
+
+  useEffect(() => {
+    const setup = async () => {
+      try {
+        const wallet = wallets.find(
+          (wallet) => wallet.address === myWalletAddress
+        );
+
+        if (!wallet) {
+          console.warn("Wallet not found");
+          return;
+        }
+
+        const provider = await wallet.getEthereumProvider();
+        if (!provider) {
+          console.warn("Provider not found");
+          return;
+        }
+
+        const ethersProvider = new ethers.BrowserProvider(provider);
+        const signerInstance = await ethersProvider.getSigner();
+        const accountAddress = await signerInstance.getAddress();
+
+        const contractInstance = new ethers.Contract(
+          contractAddress,
+          contractABI,
+          signerInstance
+        );
+
+        setSigner(signerInstance);
+        setAccount(accountAddress);
+        setContract(contractInstance);
+
+        console.log("Contract setup completed");
+      } catch (error) {
+        console.error("Error setting up contract:", error);
+      }
+    };
+
+    if (wallets.length > 0) {
+      setup();
+    }
+  }, [wallets]);
+
+  const uploadToIPFS = async () => {
+    try {
+      const imageData = new FormData();
+      imageData.append("file", formData.image!);
+
+      const imageResponse = await axios.post(
+        "https://api.pinata.cloud/pinning/pinFileToIPFS",
+        imageData,
+        {
+          headers: {
+            pinata_api_key: config.env.pinata.apiKey,
+            pinata_secret_api_key: config.env.pinata.secretApiKey,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      const imageHash = imageResponse.data.IpfsHash;
+
+      const metadata = {
+        name: formData.title,
+        description: formData.description,
+        image: `https://gateway.pinata.cloud/ipfs/${imageHash}`,
+      };
+
+      const metadataResponse = await axios.post(
+        "https://api.pinata.cloud/pinning/pinJSONToIPFS",
+        metadata,
+        {
+          headers: {
+            pinata_api_key: config.env.pinata.apiKey,
+            pinata_secret_api_key: config.env.pinata.secretApiKey,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return `https://gateway.pinata.cloud/ipfs/${metadataResponse.data.IpfsHash}`;
+    } catch {
+      throw new Error("Failed to upload metadata to IPFS");
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -56,9 +123,62 @@ const CreateBookScreen = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+
+    if (!contract || !signer) {
+      throw new Error(
+        "Contract or signer not available. Please connect your wallet."
+      );
+    }
+
+    const tokenId = Date.now();
+
+    try {
+      const metadataUri = await uploadToIPFS();
+      const priceInWei = ethers.parseEther(formData.price);
+      const royaltyBasisPoints = parseInt(formData.royaltyValue) * 100;
+      const recipient = account;
+      const royaltyRecipient = account;
+
+      const transactionReceipt = await contract.createItem(
+        tokenId,
+        priceInWei,
+        recipient,
+        royaltyRecipient,
+        royaltyBasisPoints,
+        metadataUri
+      );
+
+      console.log("Transaction sent:", transactionReceipt.hash);
+
+      // 5. Wait untuk transaction confirmation
+      const receipt = await transactionReceipt.wait();
+
+      console.log("Transaction confirmed:", receipt);
+      // Reset form
+      setFormData({
+        title: "",
+        description: "",
+        image: null,
+        epub: null,
+        price: "",
+        royaltyValue: "",
+      });
+    } catch (error: any) {
+      console.error("Error creating book:", error);
+
+      // Handle specific errors
+      if (error.code === 4001) {
+        alert("Transaction rejected by user");
+      } else if (error.code === -32603) {
+        alert("Transaction failed: " + (error.data?.message || error.message));
+      } else {
+        alert("Failed to create book: " + error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -151,7 +271,7 @@ const CreateBookScreen = () => {
           type="submit"
           className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md shadow hover:bg-indigo-700 focus:outline-none"
         >
-          Submit
+          {loading ? "loading..." : "submit"}
         </button>
       </form>
     </div>
