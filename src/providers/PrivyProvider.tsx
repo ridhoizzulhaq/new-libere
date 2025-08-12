@@ -1,5 +1,7 @@
 import { PrivyProvider } from "@privy-io/react-auth";
 import config from "../libs/config";
+import { baseSepolia } from "viem/chains";
+import { SmartWalletsProvider } from "@privy-io/react-auth/smart-wallets";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -12,9 +14,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             createOnLogin: "users-without-wallets",
           },
         },
+        defaultChain: baseSepolia,
+        supportedChains: [baseSepolia],
       }}
     >
-      {children}
+      <SmartWalletsProvider>{children}</SmartWalletsProvider>
     </PrivyProvider>
   );
 }

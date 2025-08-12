@@ -13,7 +13,7 @@ const AuthScreen = () => {
         // Perform actions for new users
       }
 
-      navigate("/libraries");
+      navigate("/home");
     },
     onError: (error) => {
       console.error("Login failed", error);

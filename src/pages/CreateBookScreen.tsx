@@ -25,6 +25,7 @@ const CreateBookScreen = () => {
   useEffect(() => {
     const setup = async () => {
       try {
+        console.log('wallet', wallets);
         const wallet = wallets.find(
           (wallet) => wallet.address === myWalletAddress
         );
@@ -62,6 +63,8 @@ const CreateBookScreen = () => {
 
     if (wallets.length > 0) {
       setup();
+    }else{
+      console.log('no wallet');
     }
   }, [wallets]);
 
@@ -132,6 +135,8 @@ const CreateBookScreen = () => {
       );
     }
 
+    setLoading(true);
+
     const tokenId = Date.now();
 
     try {
@@ -157,6 +162,8 @@ const CreateBookScreen = () => {
 
       console.log("Transaction confirmed:", receipt);
       // Reset form
+
+      setLoading(false);
       setFormData({
         title: "",
         description: "",
@@ -166,6 +173,7 @@ const CreateBookScreen = () => {
         royaltyValue: "",
       });
     } catch (error: any) {
+      setLoading(false);
       console.error("Error creating book:", error);
 
       // Handle specific errors
