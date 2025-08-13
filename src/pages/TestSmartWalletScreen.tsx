@@ -1,22 +1,18 @@
-import {
-  useCreateWallet,
-  usePrivy,
-  useSendTransaction,
-} from "@privy-io/react-auth";
+import { usePrivy } from "@privy-io/react-auth";
 import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { useEffect } from "react";
-import { encodeFunctionData, erc20Abi, parseEther } from "viem";
+import { encodeFunctionData, erc20Abi } from "viem";
 import { baseSepolia } from "viem/chains";
 
 const TestSmartWalletScreen = () => {
-  const { createWallet } = useCreateWallet({
-    onSuccess: ({ wallet }) => {
-      console.log("Created wallet ", wallet);
-    },
-    onError: (error) => {
-      console.error("Failed to create wallet with error ", error);
-    },
-  });
+  // const { createWallet } = useCreateWallet({
+  //   onSuccess: ({ wallet }) => {
+  //     console.log("Created wallet ", wallet);
+  //   },
+  //   onError: (error) => {
+  //     console.error("Failed to create wallet with error ", error);
+  //   },
+  // });
 
   const { user } = usePrivy();
   const { client } = useSmartWallets();
