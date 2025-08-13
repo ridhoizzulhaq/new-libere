@@ -1,14 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useWallets } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
 import { contractABI, contractAddress } from "../smart-contract.abi";
 import axios from "axios";
 import config from "../libs/config";
+import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
+import { baseSepolia } from "viem/chains";
+import { createPublicClient, encodeFunctionData, http } from "viem";
 
 const CreateBookScreen = () => {
   const myWalletAddress = "0x96D7Eb053e57b81cff04F620613838Fd2224eb9c";
   const { wallets } = useWallets();
+  const { client } = useSmartWallets();
   const [loading, setLoading] = useState(false);
   const [signer, setSigner] = useState<ethers.Signer | null>(null);
   const [contract, setContract] = useState<ethers.Contract | null>(null);
@@ -22,10 +25,15 @@ const CreateBookScreen = () => {
     royaltyValue: "",
   });
 
+  const clientRead = createPublicClient({
+    chain: baseSepolia,
+    transport: http(),
+  });
+
   useEffect(() => {
     const setup = async () => {
       try {
-        console.log('wallet', wallets);
+        console.log("wallet", wallets);
         const wallet = wallets.find(
           (wallet) => wallet.address === myWalletAddress
         );
@@ -63,8 +71,8 @@ const CreateBookScreen = () => {
 
     if (wallets.length > 0) {
       setup();
-    }else{
-      console.log('no wallet');
+    } else {
+      console.log("no wallet");
     }
   }, [wallets]);
 
@@ -129,63 +137,41 @@ const CreateBookScreen = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!contract || !signer) {
-      throw new Error(
-        "Contract or signer not available. Please connect your wallet."
-      );
+    if (!client) {
+      console.error("No smart account client found");
+      return;
     }
 
-    setLoading(true);
-
-    const tokenId = Date.now();
-
     try {
-      const metadataUri = await uploadToIPFS();
-      const priceInWei = ethers.parseEther(formData.price);
-      const royaltyBasisPoints = parseInt(formData.royaltyValue) * 100;
-      const recipient = account;
-      const royaltyRecipient = account;
+      // const tx = await client.sendTransaction({
+      //   chain: baseSepolia,
+      //   to: contractAddress,
+      //   data: encodeFunctionData({
+      //     abi: contractABI,
+      //     functionName: "createItem",
+      //     args: [
+      //       BigInt(111),
+      //       BigInt(10000),
+      //       "0x20c5FA751F10c16683cb7236a6a4d67c2Ad1782e",
+      //       "0x20c5FA751F10c16683cb7236a6a4d67c2Ad1782e",
+      //       BigInt(0),
+      //       "ridho jelek",
+      //     ],
+      //   }),
+      // });
+      // console.log("tx", tx);
 
-      const transactionReceipt = await contract.createItem(
-        tokenId,
-        priceInWei,
-        recipient,
-        royaltyRecipient,
-        royaltyBasisPoints,
-        metadataUri
-      );
-
-      console.log("Transaction sent:", transactionReceipt.hash);
-
-      // 5. Wait untuk transaction confirmation
-      const receipt = await transactionReceipt.wait();
-
-      console.log("Transaction confirmed:", receipt);
-      // Reset form
-
-      setLoading(false);
-      setFormData({
-        title: "",
-        description: "",
-        image: null,
-        epub: null,
-        price: "",
-        royaltyValue: "",
+      // getAccessInfo(uint256 id) -> (availableNFTs, accessedNFTs)
+      const testRead = await clientRead.readContract({
+        address: contractAddress,
+        abi: contractABI,
+        functionName: "uri",
+        args: [111],
       });
-    } catch (error: any) {
-      setLoading(false);
-      console.error("Error creating book:", error);
 
-      // Handle specific errors
-      if (error.code === 4001) {
-        alert("Transaction rejected by user");
-      } else if (error.code === -32603) {
-        alert("Transaction failed: " + (error.data?.message || error.message));
-      } else {
-        alert("Failed to create book: " + error.message);
-      }
-    } finally {
-      setLoading(false);
+      console.log("testRead", testRead);
+    } catch (error) {
+      console.error("Transaction failed:", error);
     }
   };
 
