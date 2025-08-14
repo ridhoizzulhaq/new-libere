@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import config from "../libs/config";
 import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { baseSepolia } from "viem/chains";
@@ -10,6 +10,7 @@ import { ethers } from "ethers";
 import { useNavigate } from "react-router-dom";
 import type { Book } from "../core/interfaces";
 import { ETH_PRICE } from "../core/constants";
+import { usePrivy } from "@privy-io/react-auth";
 
 const initialFormData = {
   title: "",
@@ -31,6 +32,7 @@ const baseUrl = config.env.supabase.baseUrl;
 
 const CreateBookV2Screen = () => {
   const navigate = useNavigate();
+  const { authenticated } = usePrivy();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -49,6 +51,10 @@ const CreateBookV2Screen = () => {
   const handleResetForm = () => {
     setFormData(initialFormData);
   };
+
+  useEffect(() => {
+    if (!authenticated) navigate("/auth");
+  }, [authenticated, navigate]);
 
   const uploadFileToIPFS = async (file: File) => {
     try {
@@ -165,7 +171,18 @@ const CreateBookV2Screen = () => {
 
   return (
     <div className="w-full h-full min-h-screen bg-white flex flex-row">
-      <section className="w-[50vw] bg-zinc-200"></section>
+      <section className="w-[50vw] bg-zinc-200">
+        <div className="w-full flex justify-center">
+          <div className="container mx-auto pt-12 pl-12">
+            <button
+              onClick={() => navigate("/books")}
+              className="cursor-pointer hover:underline"
+            >
+              &larr; Back
+            </button>
+          </div>
+        </div>
+      </section>
       <section className="w-[50vw] flex justify-start items-center">
         <div className="w-full max-w-xl">
           <form onSubmit={handleSubmit} className="p-8 w-full space-y-4">

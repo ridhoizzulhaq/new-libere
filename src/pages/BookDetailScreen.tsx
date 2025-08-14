@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import HomeLayout from "../components/layouts/HomeLayout";
 import config from "../libs/config";
@@ -16,6 +16,7 @@ const BookDetailScreen = () => {
   const { client } = useSmartWallets();
   const [book, setBook] = useState<Book>();
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const ethPrice = ETH_PRICE;
 
@@ -65,6 +66,7 @@ const BookDetailScreen = () => {
       const tx = await client.sendTransaction({
         chain: baseSepolia,
         to: contractAddress,
+        value: BigInt(book.priceEth),
         data: encodeFunctionData({
           abi: contractABI,
           functionName: "purchaseItem",
@@ -83,7 +85,12 @@ const BookDetailScreen = () => {
 
   return (
     <HomeLayout>
-      <div className="mt-4 w-full flex justify-center">
+      <div className="w-full flex justify-center">
+        <div className="container mx-auto pt-9 max-w-screen-xl">
+          <button onClick={() => navigate("/books")} className="cursor-pointer hover:underline">&larr; Back</button>
+        </div>
+      </div>
+      <div className="w-full flex justify-center">
         <div className="container mx-auto px-4 py-8 max-w-screen-xl">
           <div className="flex flex-row -mx-4 gap-8">
             {book ? (

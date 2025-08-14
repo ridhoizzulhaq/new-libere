@@ -43,7 +43,7 @@ const HomeScreen = () => {
               Experience the future of digital libraries where readers control
               the ecosystem. Borrow, lend, and discover books while earning
               rewards through our innovative blockchain system. Every page
-              turned, every book shared - transparently recorded forever.
+              turned, every book shared transparently recorded forever.
             </p>
           </div>
         </section>

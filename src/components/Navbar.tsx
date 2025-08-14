@@ -1,4 +1,5 @@
-import { usePrivy } from "@privy-io/react-auth";
+import { useCreateWallet, usePrivy } from "@privy-io/react-auth";
+import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
@@ -6,7 +7,18 @@ const Navbar = () => {
   const [username, setUsername] = useState("");
   const navigate = useNavigate();
 
+  const { client } = useSmartWallets();
+
   const { authenticated, logout, user } = usePrivy();
+
+  const { createWallet } = useCreateWallet({
+    onSuccess: ({ wallet }) => {
+      console.log("Created wallet ", wallet);
+    },
+    onError: (error) => {
+      console.error("Failed to create wallet with error ", error);
+    },
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -25,6 +37,10 @@ const Navbar = () => {
   const onLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const onGetWallet = () => {
+    createWallet();
   };
 
   return (
@@ -60,10 +76,11 @@ const Navbar = () => {
           </div>
         </div>
 
-        <div className="flex items-center order-2 gap-8">
+        <div className="flex items-center order-2 gap-6">
           {authenticated && (
-            <div className="flex flex-row gap-2 items-center justify-center">
-              <p className="capitalize">{username} 👋</p>
+            <div className="flex flex-col items-end">
+              <p className="capitalize font-bold text-sm">{username} 👋 </p>
+              <span className="text-xs">({client?.account.address})</span>
             </div>
           )}
 
@@ -80,6 +97,15 @@ const Navbar = () => {
               className="cursor-pointer text-dark-100 bg-white border border-dark-100 hover:bg-zinc-200 font-semibold rounded text-sm px-5 py-2"
             >
               Login
+            </button>
+          )}
+
+          {!client && (
+            <button
+              onClick={onGetWallet}
+              className="cursor-pointer text-dark-100 bg-white border border-dark-100 hover:bg-zinc-200 font-semibold rounded text-sm px-5 py-2"
+            >
+              Get A Wallet!
             </button>
           )}
         </div>

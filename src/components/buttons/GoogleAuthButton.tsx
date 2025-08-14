@@ -9,7 +9,7 @@ const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({onClick}) => {
   return (
     <button
       onClick={onClick}
-      className="w-full max-w-xs font-bold shadow-sm rounded-lg py-3 bg-gray-100 text-gray-800 flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none hover:shadow focus:shadow-sm focus:shadow-outline"
+      className="cursor-pointer w-full max-w-xs font-bold border border-zinc-200 rounded-lg py-3 bg-white text-dark-100 flex items-center justify-center focus:outline-none"
     >
       <div className="bg-white p-2 rounded-full">
         <GoogleIcon size={16} />
