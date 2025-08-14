@@ -1,28 +1,26 @@
-const BookCard = ({ id, title, genre, coverUrl }: Book) => {
+import { NavLink } from "react-router-dom";
+
+const BookCard = ({ id, title, metadataUri, author }: Book) => {
   return (
     <li className="w-full">
-      <a
-        href={`/books/${id}`}
-        className="w-full flex flex-col items-center p-4 rounded-lg shadow"
+      <NavLink
+        to={`/books/${id}`}
+        className="w-full flex flex-col items-center p-4 rounded-lg border border-zinc-200"
       >
-        <div className="text-center hidden lg:flex">
-          <div className="w-full h-64 ">
+        <div className="flex">
+          <div className="w-full h-64">
             <img
-              src={coverUrl}
+              src={metadataUri}
               alt={title}
-              className="w-full h-full object-cover rounded-lg"
+              className="w-full h-full object-cover rounded"
             />
           </div>
         </div>
         <div className="mt-4 w-full">
-          <p className="line-clamp-1 text-base font-semibold  xs:text-xl">
-            {title}
-          </p>
-          <p className="mt-1 line-clamp-1 text-sm italic  xs:text-base">
-            {genre}
-          </p>
+          <p className="line-clamp-1 text-base font-semibold">{title}</p>
+          <p className="line-clamp-1 text-sm italic text-zinc-400">{author}</p>
         </div>
-      </a>
+      </NavLink>
     </li>
   );
 };

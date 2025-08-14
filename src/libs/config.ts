@@ -8,6 +8,14 @@ const config = {
       apiKey: import.meta.env.VITE_PINATA_API_KEY,
       secretApiKey: import.meta.env.VITE_PINATA_SECRET_API_KEY,
     },
+    supabase: {
+      baseUrl: import.meta.env.VITE_SUPABASE_URL,
+      apiKey: import.meta.env.VITE_SUPABASE_API_KEY,
+    },
+    coinmarketcap: {
+      baseUrl: import.meta.env.VITE_COINMARKETCAP_BASE_URL,
+      apiKey: import.meta.env.VITE_COINMARKETCAP_API_KEY,
+    }
   },
 };
 

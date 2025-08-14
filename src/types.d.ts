@@ -1,17 +1,15 @@
 interface Book {
-  id: string;
+  id: number;
   title: string;
-  author: string;
-  genre: string;
-  rating: number;
-  totalCopies: number;
-  availableCopies: number;
   description: string;
-  coverColor: string;
-  coverUrl: string;
-  videoUrl: string;
-  summary: string;
-  createdAt?: Date | null;
+  author: string;
+  publisher: string;
+  metadataUri: string;
+  epub: string;
+  priceEth: string;
+  royalty: number;
+  addressReciepent: string;
+  addressRoyaltyRecipient: string;
 }
 
 interface AuthCredentials {

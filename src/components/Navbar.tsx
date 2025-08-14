@@ -1,28 +1,116 @@
-import { usePrivy } from "@privy-io/react-auth";
+import { useCreateWallet, usePrivy } from "@privy-io/react-auth";
+import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
+import { useEffect, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 
 const Navbar = () => {
-  const { ready, authenticated, logout, user } = usePrivy();
-  const disableLogout = !ready || (ready && !authenticated);
-  return (
-    <header className="py-10 flex justify-between gap-5">
-      <a href="/">
-        <span className="text-2xl xl:text-3xl font-extrabold">Libere.</span>
-      </a>
+  const [username, setUsername] = useState("");
+  const navigate = useNavigate();
 
-      <ul className="flex flex-row items-center gap-8">
-        <li>
-          <button
-            disabled={disableLogout}
-            onClick={logout}
-            className="text-white bg-dark-800 hover:bg-dark-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-          >
-            {
-              authenticated?user?.id:'Logout'
-            }
-          </button>
-        </li>
-      </ul>
-    </header>
+  const { client } = useSmartWallets();
+
+  const { authenticated, logout, user } = usePrivy();
+
+  const { createWallet } = useCreateWallet({
+    onSuccess: ({ wallet }) => {
+      console.log("Created wallet ", wallet);
+    },
+    onError: (error) => {
+      console.error("Failed to create wallet with error ", error);
+    },
+  });
+
+  useEffect(() => {
+    if (!user) return;
+
+    const userGoogle = user.google;
+    if (!userGoogle) return;
+
+    const name = userGoogle.name || userGoogle.email;
+    setUsername(name);
+  }, [user]);
+
+  const onLogin = () => {
+    navigate("/auth");
+  };
+
+  const onLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  const onGetWallet = () => {
+    createWallet();
+  };
+
+  return (
+    <nav className="pt-8 pb-4 border-b border-zinc-200">
+      <div className="flex flex-wrap items-center justify-between max-w-screen-xl mx-auto">
+        <div className="flex flex-row justify-center items-center gap-12">
+          <a href="/">
+            <span className="text-2xl xl:text-3xl font-extrabold">Libere.</span>
+          </a>
+          <div className="items-center justify-between flex w-auto">
+            <ul className="flex flex-row justify-center items-center space-x-8">
+              <NavLink
+                to="/books"
+                className={({ isActive }) =>
+                  isActive
+                    ? "block text-zinc-700 font-bold p-0"
+                    : "block text-zinc-400 p-0 hover:underline"
+                }
+              >
+                Books
+              </NavLink>
+              <NavLink
+                to="/publish"
+                className={({ isActive }) =>
+                  isActive
+                    ? "block text-zinc-700 font-bold underline p-0"
+                    : "block text-zinc-400 p-0 hover:underline"
+                }
+              >
+                Publish Book
+              </NavLink>
+            </ul>
+          </div>
+        </div>
+
+        <div className="flex items-center order-2 gap-6">
+          {authenticated && (
+            <div className="flex flex-col items-end">
+              <p className="capitalize font-bold text-sm">{username} 👋 </p>
+              <span className="text-xs">({client?.account.address})</span>
+            </div>
+          )}
+
+          {authenticated ? (
+            <button
+              onClick={onLogout}
+              className="cursor-pointer text-dark-100 bg-white border border-dark-100 hover:bg-zinc-200 font-semibold rounded text-sm px-5 py-2"
+            >
+              Logout
+            </button>
+          ) : (
+            <button
+              onClick={onLogin}
+              className="cursor-pointer text-dark-100 bg-white border border-dark-100 hover:bg-zinc-200 font-semibold rounded text-sm px-5 py-2"
+            >
+              Login
+            </button>
+          )}
+
+          {!client && (
+            <button
+              onClick={onGetWallet}
+              className="cursor-pointer text-dark-100 bg-white border border-dark-100 hover:bg-zinc-200 font-semibold rounded text-sm px-5 py-2"
+            >
+              Get A Wallet!
+            </button>
+          )}
+        </div>
+      </div>
+    </nav>
   );
 };
 
