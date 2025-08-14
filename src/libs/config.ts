@@ -1,5 +1,8 @@
 const config = {
   env: {
+    db: {
+      dbUrl: import.meta.env.VITE_DATABASE_URL
+    },
     privy: {
       appId: import.meta.env.VITE_PRIVY_APP_ID,
       clientId: import.meta.env.VITE_PRIVY_CLIENT_ID,
