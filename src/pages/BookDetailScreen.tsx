@@ -4,12 +4,18 @@ import HomeLayout from "../components/layouts/HomeLayout";
 import config from "../libs/config";
 import { ethers } from "ethers";
 import { ETH_PRICE } from "../core/constants";
+import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
+import { baseSepolia } from "viem/chains";
+import { contractABI, contractAddress } from "../smart-contract.abi";
+import { encodeFunctionData } from "viem";
 
 const baseUrl = config.env.supabase.baseUrl;
 
 const BookDetailScreen = () => {
   const { id } = useParams();
+  const { client } = useSmartWallets();
   const [book, setBook] = useState<Book>();
+  const [loading, setLoading] = useState(false);
 
   const ethPrice = ETH_PRICE;
 
@@ -38,6 +44,43 @@ const BookDetailScreen = () => {
     return Math.round(usdAmount * 100) / 100;
   };
 
+  const onMintBook = async () => {
+    setLoading(true);
+    if (!client) {
+      console.error("No smart account client found");
+      setLoading(false);
+      return;
+    }
+
+    if (!book) {
+      console.error("No Book ID");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const id = book.id;
+      const amount = 1;
+
+      const tx = await client.sendTransaction({
+        chain: baseSepolia,
+        to: contractAddress,
+        data: encodeFunctionData({
+          abi: contractABI,
+          functionName: "purchaseItem",
+          args: [id, amount],
+        }),
+      });
+
+      console.log("tx", tx);
+
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.error("Transaction failed:", error);
+    }
+  };
+
   return (
     <HomeLayout>
       <div className="mt-4 w-full flex justify-center">
@@ -54,7 +97,7 @@ const BookDetailScreen = () => {
                 </div>
               </div>
             ) : (
-              <div className="w-full md:w-1/2 h-[32rem] bg-zinc-200 animate-pulse rounded"/>
+              <div className="w-full md:w-1/2 h-[32rem] bg-zinc-200 animate-pulse rounded" />
             )}
 
             <div className="w-full md:w-1/2 px-4">
@@ -77,8 +120,11 @@ const BookDetailScreen = () => {
                     {book.publisher}
                   </p>
                   <div className="flex space-x-4 mt-8">
-                    <button className="cursor-pointer bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 focus:outline-none">
-                      Buy Book
+                    <button
+                      className="cursor-pointer bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 focus:outline-none"
+                      onClick={onMintBook}
+                    >
+                      {loading ? "Loading..." : "Get Book"}
                     </button>
                   </div>
                 </>

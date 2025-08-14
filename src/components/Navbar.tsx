@@ -44,7 +44,7 @@ const Navbar = () => {
                     : "block text-zinc-400 p-0 hover:underline"
                 }
               >
-                Explore
+                Books
               </NavLink>
               <NavLink
                 to="/publish"
