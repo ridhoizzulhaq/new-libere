@@ -7,7 +7,7 @@ interface HomeLayoutProps {
 
 const HomeLayout: React.FC<HomeLayoutProps> = ({ children }) => {
   return (
-    <main className="w-full h-fit min-h-screen flex-1 flex-col bg-cover bg-top bg-white px-5 xs:px-10 md:px-16">
+    <main className="w-full h-fit mb-[5rem] min-h-screen bg-white flex-1 flex-col items-center justify-center px-5">
       <Navbar />
       {children}
     </main>

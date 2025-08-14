@@ -1,0 +1,1 @@
+export const ETH_PRICE = 4538;

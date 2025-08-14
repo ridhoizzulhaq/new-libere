@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import config from "../libs/config";
 import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { baseSepolia } from "viem/chains";
@@ -9,6 +9,7 @@ import dayjs from "dayjs";
 import { ethers } from "ethers";
 import { useNavigate } from "react-router-dom";
 import type { Book } from "../core/interfaces";
+import { ETH_PRICE } from "../core/constants";
 
 const initialFormData = {
   title: "",
@@ -40,26 +41,10 @@ const CreateBookV2Screen = () => {
     price: "",
     royaltyValue: "",
   });
-  const [ethPrice, setEthPrice] = useState(0);
+  const ethPrice = ETH_PRICE;
   const [ethAmount, setEthAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const { client } = useSmartWallets();
-
-  useEffect(() => {
-    const fetchPrice = async () => {
-      try {
-        const res = await fetch(
-          "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
-        );
-        const data = await res.json();
-        setEthPrice(data.ethereum.usd);
-      } catch (err) {
-        console.error("Failed to get ETH Price", err);
-      }
-    };
-
-    fetchPrice();
-  }, []);
 
   const handleResetForm = () => {
     setFormData(initialFormData);
@@ -171,7 +156,7 @@ const CreateBookV2Screen = () => {
       setLoading(false);
 
       handleResetForm();
-      navigate("/");
+      navigate("/books");
     } catch (error) {
       setLoading(false);
       console.error("Transaction failed:", error);

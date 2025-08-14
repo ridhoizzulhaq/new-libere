@@ -28,7 +28,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white border-gray-200 py-8">
+    <nav className="pt-8 pb-4 border-b border-zinc-200">
       <div className="flex flex-wrap items-center justify-between max-w-screen-xl mx-auto">
         <div className="flex flex-row justify-center items-center gap-12">
           <a href="/">
@@ -37,7 +37,7 @@ const Navbar = () => {
           <div className="items-center justify-between flex w-auto">
             <ul className="flex flex-row justify-center items-center space-x-8">
               <NavLink
-                to="/"
+                to="/books"
                 className={({ isActive }) =>
                   isActive
                     ? "block text-zinc-700 font-bold p-0"
