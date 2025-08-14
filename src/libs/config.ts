@@ -11,10 +11,6 @@ const config = {
     supabase: {
       baseUrl: import.meta.env.VITE_SUPABASE_URL,
       apiKey: import.meta.env.VITE_SUPABASE_API_KEY,
-    },
-    coinmarketcap: {
-      baseUrl: import.meta.env.VITE_COINMARKETCAP_BASE_URL,
-      apiKey: import.meta.env.VITE_COINMARKETCAP_API_KEY,
     }
   },
 };
