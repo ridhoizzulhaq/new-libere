@@ -7,6 +7,7 @@ import { contractABI, contractAddress } from "../smart-contract.abi";
 import { encodeFunctionData } from "viem";
 import dayjs from "dayjs";
 import { ethers } from "ethers";
+import { useNavigate } from "react-router-dom";
 
 const initialFormData = {
   title: "",
@@ -17,7 +18,15 @@ const initialFormData = {
   royaltyValue: "",
 };
 
+const pinataHeaders = {
+  pinata_api_key: config.env.pinata.apiKey,
+  pinata_secret_api_key: config.env.pinata.secretApiKey,
+};
+
+const baseUrl = config.env.supabase.baseUrl;
+
 const CreateBookV2Screen = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -51,46 +60,20 @@ const CreateBookV2Screen = () => {
     setFormData(initialFormData);
   };
 
-  const uploadToIPFS = async () => {
+  const uploadFileToIPFS = async (file: File) => {
     try {
-      const imageData = new FormData();
-      imageData.append("file", formData.image!);
+      const formData = new FormData();
+      formData.append("file", file);
 
-      const imageResponse = await axios.post(
+      const res = await axios.post(
         "https://api.pinata.cloud/pinning/pinFileToIPFS",
-        imageData,
-        {
-          headers: {
-            pinata_api_key: config.env.pinata.apiKey,
-            pinata_secret_api_key: config.env.pinata.secretApiKey,
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        formData,
+        { headers: { ...pinataHeaders, "Content-Type": "multipart/form-data" } }
       );
 
-      const imageHash = imageResponse.data.IpfsHash;
-
-      const metadata = {
-        name: formData.title,
-        description: formData.description,
-        image: `https://gateway.pinata.cloud/ipfs/${imageHash}`,
-      };
-
-      const metadataResponse = await axios.post(
-        "https://api.pinata.cloud/pinning/pinJSONToIPFS",
-        metadata,
-        {
-          headers: {
-            pinata_api_key: config.env.pinata.apiKey,
-            pinata_secret_api_key: config.env.pinata.secretApiKey,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      return `https://gateway.pinata.cloud/ipfs/${metadataResponse.data.IpfsHash}`;
+      return `https://gateway.pinata.cloud/ipfs/${res.data.IpfsHash}`;
     } catch {
-      throw new Error("Failed to upload metadata to IPFS");
+      throw new Error("Failed to upload file to IPFS");
     }
   };
 
@@ -120,6 +103,13 @@ const CreateBookV2Screen = () => {
     setLoading(true);
     if (!client) {
       console.error("No smart account client found");
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.image && !formData.epub) {
+      console.error("No image cover and epub file");
+      setLoading(false);
       return;
     }
 
@@ -129,7 +119,8 @@ const CreateBookV2Screen = () => {
       const addressRecipient = client.account.address;
       const addressRoyaltyRecipient = client.account.address;
       const royaltyPercent = Number(formData.royaltyValue) * 100;
-      const metadataUri = await uploadToIPFS();
+      const metadataUri = await uploadFileToIPFS(formData.image!);
+      const epubData = await uploadFileToIPFS(formData.epub!);
 
       const tx = await client.sendTransaction({
         chain: baseSepolia,
@@ -150,8 +141,30 @@ const CreateBookV2Screen = () => {
 
       console.log("tx", tx);
 
+      const data = {
+        id: id,
+        title: formData.title,
+        description: formData.description,
+        metadataUri: metadataUri,
+        epub: epubData,
+        priceEth: price.toString(),
+        royalty: royaltyPercent,
+        addressReciepent: addressRecipient,
+        addressRoyaltyRecipient: addressRoyaltyRecipient,
+      };
+
+      const uploadToDB = await axios.post(`${baseUrl}/rest/v1/Book`, data, {
+        headers: {
+          apiKey: config.env.supabase.apiKey,
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.warn("updateToDB", uploadToDB);
       setLoading(false);
+
       handleResetForm();
+      navigate("/home");
     } catch (error) {
       setLoading(false);
       console.error("Transaction failed:", error);
