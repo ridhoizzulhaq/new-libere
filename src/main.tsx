@@ -8,6 +8,7 @@ import LibraryScreen from "./pages/LibraryScreen.tsx";
 import HomeScreen from "./pages/HomeScreen.tsx";
 import CreateBookScreen from "./pages/CreateBookScreen.tsx";
 import TestSmartWalletScreen from "./pages/TestSmartWalletScreen.tsx";
+import CreateBookV2Screen from "./pages/CreateBookV2Screen.tsx";
 
 const router = createBrowserRouter([
   {
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
   {
     path: "/create-book",
     element: <CreateBookScreen />,
+  },
+  {
+    path: "/v2",
+    element: <CreateBookV2Screen />,
   },
   {
     path: "/test",
