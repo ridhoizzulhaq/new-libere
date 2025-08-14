@@ -8,6 +8,9 @@ import HomeScreen from "./pages/HomeScreen.tsx";
 import CreateBookV2Screen from "./pages/CreateBookV2Screen.tsx";
 import BookDetailScreen from "./pages/BookDetailScreen.tsx";
 
+import { Buffer } from 'buffer';
+window.Buffer = Buffer; 
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Providers>
