@@ -8,10 +8,13 @@ import { encodeFunctionData } from "viem";
 import dayjs from "dayjs";
 import { ethers } from "ethers";
 import { useNavigate } from "react-router-dom";
+import type { Book } from "../core/interfaces";
 
 const initialFormData = {
   title: "",
   description: "",
+  author: "",
+  publisher: "",
   image: null,
   epub: null,
   price: "",
@@ -30,6 +33,8 @@ const CreateBookV2Screen = () => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    author: "",
+    publisher: "",
     image: null,
     epub: null,
     price: "",
@@ -141,9 +146,11 @@ const CreateBookV2Screen = () => {
 
       console.log("tx", tx);
 
-      const data = {
+      const data: Book = {
         id: id,
         title: formData.title,
+        author: formData.author,
+        publisher: formData.publisher,
         description: formData.description,
         metadataUri: metadataUri,
         epub: epubData,
@@ -174,8 +181,8 @@ const CreateBookV2Screen = () => {
   return (
     <div className="w-full h-full min-h-screen bg-white flex flex-row">
       <section className="w-[50vw] bg-zinc-200"></section>
-      <section className="w-[50vw] flex justify-center items-center pr-[12rem]">
-        <div className="w-full">
+      <section className="w-[50vw] flex justify-start items-center">
+        <div className="w-full max-w-xl">
           <form onSubmit={handleSubmit} className="p-8 w-full space-y-4">
             <h2 className="text-2xl font-semibold mb-6">Add New Item</h2>
             <div>
@@ -190,6 +197,36 @@ const CreateBookV2Screen = () => {
                   required
                   className="block w-full h-10 px-3 mt-1 text-sm text-dark-100 border border-zinc-300 focus:outline-none rounded focus:border-zinc-800"
                 />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-x-2">
+              <div>
+                <label className="block text-sm font-medium">Author</label>
+                <div className="mt-1">
+                  <input
+                    type="text"
+                    name="author"
+                    value={formData.author}
+                    onChange={handleChange}
+                    placeholder="Enter Author"
+                    required
+                    className="block w-full h-10 px-3 mt-1 text-sm text-dark-100 border border-zinc-300 focus:outline-none rounded focus:border-zinc-800"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium">Publisher</label>
+                <div className="mt-1">
+                  <input
+                    type="text"
+                    name="publisher"
+                    value={formData.publisher}
+                    onChange={handleChange}
+                    placeholder="Enter publisher"
+                    required
+                    className="block w-full h-10 px-3 mt-1 text-sm text-dark-100 border border-zinc-300 focus:outline-none rounded focus:border-zinc-800"
+                  />
+                </div>
               </div>
             </div>
             <div>
@@ -229,41 +266,47 @@ const CreateBookV2Screen = () => {
                 className="mt-2 block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-zinc-200 file:text-zinc-800 hover:file:bg-zinc-300 cursor-pointer"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium">Price ($USD)</label>
-              <div className="mt-1">
+
+            <div className="grid grid-cols-2 gap-x-2">
+              <div>
+                <label className="block text-sm font-medium">
+                  Price ($USD)
+                </label>
+                <div className="mt-1">
+                  <input
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleChange}
+                    step="0.01"
+                    placeholder="Enter book price in USD"
+                    required
+                    className="block w-full h-10 px-3 mt-1 text-sm text-dark-100 border border-zinc-300 focus:outline-none rounded focus:border-zinc-800"
+                  />
+                </div>
+                {ethPrice > 0 && formData.price && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    ≈ {ethAmount} ETH (Current ETH price: ${ethPrice.toFixed(2)}
+                    )
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium">
+                  Royalty Value % (Max 10%)
+                </label>
                 <input
                   type="number"
-                  name="price"
-                  value={formData.price}
+                  name="royaltyValue"
+                  value={formData.royaltyValue}
                   onChange={handleChange}
-                  step="0.01"
-                  placeholder="Enter book price in USD"
+                  min="0"
+                  max="10"
+                  placeholder="Enter book royalty"
                   required
                   className="block w-full h-10 px-3 mt-1 text-sm text-dark-100 border border-zinc-300 focus:outline-none rounded focus:border-zinc-800"
                 />
               </div>
-              {ethPrice > 0 && formData.price && (
-                <p className="text-xs text-gray-500 mt-1">
-                  ≈ {ethAmount} ETH (Current ETH price: ${ethPrice.toFixed(2)})
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium">
-                Royalty Value % (Max 10%)
-              </label>
-              <input
-                type="number"
-                name="royaltyValue"
-                value={formData.royaltyValue}
-                onChange={handleChange}
-                min="0"
-                max="10"
-                placeholder="Enter book royalty"
-                required
-                className="block w-full h-10 px-3 mt-1 text-sm text-dark-100 border border-zinc-300 focus:outline-none rounded focus:border-zinc-800"
-              />
             </div>
             <button
               type="submit"

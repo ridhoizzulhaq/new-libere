@@ -13,7 +13,7 @@ import CreateBookV2Screen from "./pages/CreateBookV2Screen.tsx";
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <AuthScreen />,
+    element: <HomeScreen />,
   },
   {
     path: "/home",
@@ -32,7 +32,7 @@ const router = createBrowserRouter([
     element: <CreateBookScreen />,
   },
   {
-    path: "/v2",
+    path: "/publish",
     element: <CreateBookV2Screen />,
   },
   {
