@@ -171,7 +171,7 @@ const CreateBookV2Screen = () => {
       setLoading(false);
 
       handleResetForm();
-      navigate("/home");
+      navigate("/");
     } catch (error) {
       setLoading(false);
       console.error("Transaction failed:", error);

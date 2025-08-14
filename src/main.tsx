@@ -4,7 +4,6 @@ import "./index.css";
 import Providers from "./providers/PrivyProvider.tsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import AuthScreen from "./pages/AuthScreen.tsx";
-import LibraryScreen from "./pages/LibraryScreen.tsx";
 import HomeScreen from "./pages/HomeScreen.tsx";
 import CreateBookScreen from "./pages/CreateBookScreen.tsx";
 import TestSmartWalletScreen from "./pages/TestSmartWalletScreen.tsx";
@@ -16,16 +15,8 @@ const router = createBrowserRouter([
     element: <HomeScreen />,
   },
   {
-    path: "/home",
-    element: <HomeScreen />,
-  },
-  {
     path: "/auth",
     element: <AuthScreen />,
-  },
-  {
-    path: "/libraries",
-    element: <LibraryScreen />,
   },
   {
     path: "/create-book",
