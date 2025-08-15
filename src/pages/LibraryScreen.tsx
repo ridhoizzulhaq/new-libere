@@ -61,9 +61,9 @@ const LibraryScreen = () => {
       <div className="w-full h-full flex items-center justify-center mt-12">
         <section
           className="w-full flex justify-start items-center rounded-lg relative max-w-screen-xl p-12 bg-cover bg-center"
-          style={{ backgroundImage: "url('/images/auth-illustration.png')" }}
+          style={{ backgroundImage: "url('/images/bookself.jpg')" }}
         >
-          <div className="absolute inset-0 bg-black/70 rounded-lg"></div>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-xs rounded-lg"></div>
           <div className="relative z-10 flex flex-col gap-4 text-white">
             <h2 className="text-5xl font-extrabold">Library</h2>
             <p className="text-lg max-w-2xl">

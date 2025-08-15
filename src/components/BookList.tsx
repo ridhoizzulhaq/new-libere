@@ -7,8 +7,8 @@ interface Props {
 
 const BookList = ({ books, isLoading }: Props) => {
   return (
-    <section className="w-full flex justify-center">
-      <div className="max-w-screen-xl">
+    <section className="w-full flex justify-center items-center">
+      <div className="w-full">
         <h2 className="text-2xl font-bold">
           📕 Book Lists
         </h2>
