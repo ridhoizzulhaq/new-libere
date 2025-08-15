@@ -45,13 +45,14 @@ const HomeScreen = () => {
         <section className="max-w-screen-xl h-fit flex flex-col px-[4rem] py-[2rem] mb-[4rem]">
           <div className="flex flex-col items-center justify-center gap-[1rem] w-full text-center">
             <h1 className="w-[70%] font-bold text-5xl leading-snug text-center">
-              Libere Revolution Your Books, Your Rules, Your Rewards
+              Join Us for On Chain E-Book Revolution
             </h1>
             <p className="w-[60%] text-lg text-center">
-              Experience the future of digital libraries where readers control
-              the ecosystem. Borrow, lend, and discover books while earning
-              rewards through our innovative blockchain system. Every page
-              turned, every book shared transparently recorded forever.
+              Libere focuses on NFT based e-book distribution for both readers
+              and libraries. Readers buy for true ownership, while donations add
+              copies that directly expand public borrowing capacity. The
+              platform provides transparent, royalty-ready, verifiable impact
+              for donors, and easy-to-use experience.
             </p>
           </div>
         </section>

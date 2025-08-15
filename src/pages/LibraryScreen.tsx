@@ -39,10 +39,12 @@ const LibraryScreen = () => {
 
         const res = await fetch(config.env.baseSepolia.url);
         const data = await res.json();
-        
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const ids: string[] = data.items.map((i:any) => i.id);
-        const filteredBooks = books.filter((book) => ids.includes(String(book.id)));
+        const ids: string[] = data.items.map((i: any) => i.id);
+        const filteredBooks = books.filter((book) =>
+          ids.includes(String(book.id))
+        );
 
         setNftBooks(filteredBooks);
         setLoading(false);
@@ -65,10 +67,9 @@ const LibraryScreen = () => {
           <div className="relative z-10 flex flex-col gap-4 text-white">
             <h2 className="text-5xl font-extrabold">Library</h2>
             <p className="text-lg max-w-2xl">
-              Experience the future of digital libraries where readers control
-              the ecosystem. Borrow, lend, and discover books while earning
-              rewards through our innovative blockchain system. Every page
-              turned, every book shared transparently recorded forever.
+              An on-chain public library where donor-funded copies determine
+              borrowing capacity, enabling free, time-limited access with
+              transparent, audit-ready impact.
             </p>
           </div>
         </section>
