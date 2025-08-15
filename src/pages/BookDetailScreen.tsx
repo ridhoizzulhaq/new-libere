@@ -18,6 +18,7 @@ const BookDetailScreen = () => {
   const { client } = useSmartWallets();
   const [book, setBook] = useState<Book>();
   const [loading, setLoading] = useState(false);
+  const [loading2, setLoading2] = useState(false);
   const navigate = useNavigate();
 
   const ethPrice = ETH_PRICE;
@@ -85,7 +86,44 @@ const BookDetailScreen = () => {
     }
   };
 
-  const onDonate = async () => {};
+  const onDonate = async () => {
+    setLoading2(true);
+    if (!client) {
+      console.error("No smart account client found");
+      setLoading2(false);
+      return;
+    }
+
+    if (!book) {
+      console.error("No Book ID");
+      setLoading2(false);
+      return;
+    }
+
+    try {
+      const accountAddress = client.account.address;
+      const id = book.id;
+      const amount = 1;
+
+      const tx = await client.sendTransaction({
+        chain: baseSepolia,
+        to: contractAddress,
+        value: BigInt(book.priceEth),
+        data: encodeFunctionData({
+          abi: contractABI,
+          functionName: "ItemPurchasedForLibrary",
+          args: [accountAddress, id, amount],
+        }),
+      });
+
+      console.log("tx", tx);
+
+      setLoading2(false);
+    } catch (error) {
+      setLoading2(false);
+      console.error("Transaction failed:", error);
+    }
+  };
 
   return (
     <HomeLayout>
@@ -150,7 +188,7 @@ const BookDetailScreen = () => {
                       className="cursor-pointer flex flex-row gap-2 justify-center items-center bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 focus:outline-none"
                       onClick={onDonate}
                     >
-                      <BiDonateHeart /> Donate to Civilib
+                      <BiDonateHeart /> {loading2 ? "Loading..." : "Donate to Civilib"}
                     </button>
                   </div>
                 </>
