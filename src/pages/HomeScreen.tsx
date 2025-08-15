@@ -11,24 +11,24 @@ const HomeScreen = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
-    const { authenticated } = usePrivy();
+  const { authenticated } = usePrivy();
 
   useEffect(() => {
-      if (!authenticated) navigate("/auth");
-    }, [authenticated, navigate]);
+    if (!authenticated) navigate("/auth");
+  }, [authenticated, navigate]);
 
   useEffect(() => {
     const fetchBooks = async () => {
       try {
         setLoading(true);
-        
+
         const res = await fetch(`${baseUrl}/rest/v1/Book`, {
           headers: {
             apiKey: config.env.supabase.apiKey,
           },
         });
         const data = await res.json();
-        
+
         setBooks(data);
         setLoading(false);
       } catch (err) {
