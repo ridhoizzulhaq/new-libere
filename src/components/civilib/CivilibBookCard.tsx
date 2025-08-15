@@ -4,18 +4,22 @@ import { FaBookReader } from "react-icons/fa";
 import { createPublicClient, http } from "viem";
 import { baseSepolia } from "viem/chains";
 import { contractAddress, contractABI } from "../../smart-contract.abi";
+import { FiSlash } from "react-icons/fi";
 
 const CivilibBookCard = ({ id, title, metadataUri, author }: Book) => {
-  const [accessed, setAccessed] = useState(3);
-  const [availability, setAvailability] = useState(5);
+  const [accessed, setAccessed] = useState(0);
+  const [availability, setAvailability] = useState(0);
 
   const client = createPublicClient({ chain: baseSepolia, transport: http() });
+
+  const isBookAvailable = availability - accessed == 0 ? false : true;
+  const bookLeftAmount = availability - accessed;
 
   useEffect(() => {
     const fetchAccessInfo = async () => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data:any = await client.readContract({
+        const data: any = await client.readContract({
           address: contractAddress,
           abi: contractABI,
           functionName: "getAccessInfo",
@@ -53,19 +57,33 @@ const CivilibBookCard = ({ id, title, metadataUri, author }: Book) => {
           </h5>
           <p className="line-clamp-1 text-sm italic text-zinc-400">{author}</p>
           <div className="flex items-start justify-start mt-2.5 mb-5 w-full gap-3">
-            <span className="bg-zinc-200 text-dark-100 text-xs font-semibold px-2.5 py-0.5 rounded-sm">
-              Author: {author}
+            <span
+              className={
+                bookLeftAmount > 0
+                  ? "bg-green-200 text-green-900"
+                  : "bg-red-200 text-red-900" +
+                    " text-xs font-semibold px-2.5 py-0.5 rounded-sm"
+              }
+            >
+              Availability: {bookLeftAmount} left
             </span>
           </div>
           <div className="w-full flex items-center gap-2 justify-between">
-            <p className="w-[50%] flex items-end justify-start text-zinc-400 text-sm font-semibold px-2.5 py-0.5 rounded-sm">
-              <span className="font-extrabold text-xl text-dark-100">
-                {accessed}{" "}
-              </span>{" "}
-              /{availability}
-            </p>
-            <button className="flex flex-row gap-2 justify-center items-center w-[50%] bg-white border border-dark-100 text-dark-100 px-2.5 py-[.25rem] rounded-sm">
-              <FaBookReader /> Borrow
+            <button
+              disabled={!isBookAvailable}
+              className="cursor-pointer flex flex-row gap-2 justify-center items-center w-full bg-white border border-dark-100 text-dark-100 px-2.5 py-[.25rem] rounded-sm disabled:bg-zinc-200 disabled:cursor-not-allowed
+              disabled:border-none disabled:text-zinc-400"
+            >
+              {isBookAvailable ? (
+                <>
+                  <FaBookReader /> Borrow
+                </>
+              ) : (
+                <>
+                  <FiSlash />
+                  Not available
+                </>
+              )}
             </button>
           </div>
         </div>
