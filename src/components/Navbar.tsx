@@ -80,7 +80,10 @@ const Navbar = () => {
           {authenticated && (
             <div className="flex flex-col items-end">
               <p className="capitalize font-bold text-sm">{username} 👋 </p>
-              <span className="text-xs">({client?.account.address})</span>
+
+              {client && (
+                <span className="text-xs">({client?.account.address})</span>
+              )}
             </div>
           )}
 
