@@ -6,7 +6,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import { PiHandDepositBold } from "react-icons/pi";
 import { GiBookshelf } from "react-icons/gi";
-
+import { LuBookOpenCheck } from "react-icons/lu";
 
 const baseUrl = config.env.supabase.baseUrl;
 
@@ -61,7 +61,7 @@ const HomeScreen = () => {
         </section>
       </div>
 
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center mb-5">
         <div className="w-full max-w-screen-xl h-full flex flex-row gap-5 justify-center items-center">
           <NavLink
             to={"/libraries"}
@@ -70,7 +70,10 @@ const HomeScreen = () => {
           >
             <div className="absolute inset-0 bg-black/40 backdrop-blur-xs rounded-lg"></div>
             <div className="relative z-10 flex flex-col gap-4 text-white">
-              <h2 className="text-5xl font-extrabold flex flex-row gap-3"><GiBookshelf />Library</h2>
+              <h2 className="text-5xl font-extrabold flex flex-row gap-3">
+                <GiBookshelf />
+                Library
+              </h2>
               <p className="text-lg max-w-2xl">
                 An on-chain public library where donor-funded copies determine
                 borrowing capacity, enabling free, time-limited access with
@@ -79,13 +82,39 @@ const HomeScreen = () => {
             </div>
           </NavLink>
           <NavLink
+            to={"/bookselfs"}
+            className="w-full flex justify-start items-center rounded-lg relative p-12 bg-cover bg-center"
+            style={{ backgroundImage: "url('/images/auth-illustration.png')" }}
+          >
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-xs rounded-lg"></div>
+            <div className="relative z-10 flex flex-col gap-4 text-white">
+              <h2 className="text-5xl font-extrabold flex flex-row gap-3">
+                <LuBookOpenCheck />
+                My Bookself
+              </h2>
+              <p className="text-lg max-w-2xl">
+                Your personal space to view, track, and enjoy books you own or
+                borrow — all in one organized collection, ready anytime whether
+                digital, physical, or from the community.
+              </p>
+            </div>
+          </NavLink>
+        </div>
+      </div>
+
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="w-full max-w-screen-xl h-full flex justify-center items-center">
+          <NavLink
             to={"/publish"}
             className="w-full flex justify-start items-center rounded-lg relative p-12 bg-cover bg-center"
             style={{ backgroundImage: "url('/images/book.jpg')" }}
           >
             <div className="absolute inset-0 bg-black/40 backdrop-blur-xs rounded-lg"></div>
             <div className="relative z-10 flex flex-col gap-4 text-white">
-              <h2 className="text-5xl font-extrabold flex flex-row gap-3"><PiHandDepositBold />Publish Book</h2>
+              <h2 className="text-5xl font-extrabold flex flex-row gap-3">
+                <PiHandDepositBold />
+                Publish Book
+              </h2>
               <p className="text-lg max-w-2xl">
                 Share your books with the world by publishing them on-chain,
                 allowing readers to access, borrow, and enjoy your creations

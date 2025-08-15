@@ -13,7 +13,8 @@ const config = {
       apiKey: import.meta.env.VITE_SUPABASE_API_KEY,
     },
     baseSepolia: {
-      url: import.meta.env.VITE_BASE_SEPOLIA_LIBRARY_URL
+      url: import.meta.env.VITE_BASE_SEPOLIA_LIBRARY_URL,
+      baseUrl: import.meta.env.VITE_BASE_SEPOLIA_LIBRARY_BASE_URL,
     }
   },
 };
