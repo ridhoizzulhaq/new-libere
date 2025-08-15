@@ -1,16 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { FaBookReader } from "react-icons/fa";
-import { createPublicClient, http } from "viem";
-import { baseSepolia } from "viem/chains";
 import { contractAddress, contractABI } from "../../smart-contract.abi";
-import { FiSlash } from "react-icons/fi";
+import CivilibAccessButton from "./CivilibAccessButton";
 
-const CivilibBookCard = ({ id, title, metadataUri, author }: Book) => {
+interface Props {
+  book: Book;
+  client: any;
+  clientPublic: any;
+}
+
+const CivilibBookCard = ({ book, client, clientPublic }: Props) => {
   const [accessed, setAccessed] = useState(0);
   const [availability, setAvailability] = useState(0);
-
-  const client = createPublicClient({ chain: baseSepolia, transport: http() });
 
   const isBookAvailable = availability - accessed == 0 ? false : true;
   const bookLeftAmount = availability - accessed;
@@ -18,12 +20,11 @@ const CivilibBookCard = ({ id, title, metadataUri, author }: Book) => {
   useEffect(() => {
     const fetchAccessInfo = async () => {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data: any = await client.readContract({
+        const data: any = await clientPublic.readContract({
           address: contractAddress,
           abi: contractABI,
           functionName: "getAccessInfo",
-          args: [id],
+          args: [book.id],
         });
 
         setAvailability(Number(data[0]));
@@ -34,28 +35,30 @@ const CivilibBookCard = ({ id, title, metadataUri, author }: Book) => {
     };
 
     fetchAccessInfo();
-  }, [client, id]);
+  }, [clientPublic, book.id]);
 
   return (
     <li className="w-full">
       <NavLink
-        to={`/books/${id}`}
+        to={`/books/${book.id}`}
         className="w-full flex flex-col items-center p-4 rounded border border-zinc-200"
       >
         <div className="flex">
           <div className="w-full h-64">
             <img
-              src={metadataUri}
-              alt={title}
+              src={book.metadataUri}
+              alt={book.title}
               className="w-full h-full object-cover rounded"
             />
           </div>
         </div>
         <div className="w-full mt-2">
           <h5 className="text-xl font-semibold tracking-tight text-gray-900">
-            {title}
+            {book.title}
           </h5>
-          <p className="line-clamp-1 text-sm italic text-zinc-400">{author}</p>
+          <p className="line-clamp-1 text-sm italic text-zinc-400">
+            {book.author}
+          </p>
           <div className="flex items-start justify-start mt-2.5 mb-5 w-full gap-3">
             <span
               className={
@@ -69,22 +72,13 @@ const CivilibBookCard = ({ id, title, metadataUri, author }: Book) => {
             </span>
           </div>
           <div className="w-full flex items-center gap-2 justify-between">
-            <button
-              disabled={!isBookAvailable}
-              className="cursor-pointer flex flex-row gap-2 justify-center items-center w-full bg-white border border-dark-100 text-dark-100 px-2.5 py-[.25rem] rounded-sm disabled:bg-zinc-200 disabled:cursor-not-allowed
-              disabled:border-none disabled:text-zinc-400"
-            >
-              {isBookAvailable ? (
-                <>
-                  <FaBookReader /> Borrow
-                </>
-              ) : (
-                <>
-                  <FiSlash />
-                  Not available
-                </>
-              )}
-            </button>
+            <CivilibAccessButton
+              client={client}
+              clientPublic={clientPublic}
+              isBookAvailable={isBookAvailable}
+              bookId={book.id}
+              smartWalletAddress={client?.account.address}
+            />
           </div>
         </div>
       </NavLink>
