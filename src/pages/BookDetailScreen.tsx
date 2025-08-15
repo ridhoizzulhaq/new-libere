@@ -114,8 +114,8 @@ const BookDetailScreen = () => {
                   <p className="text-zinc-500 mb-4">ID: {book.id}</p>
                   <p className="text-gray-700 mb-6">{book.description}</p>
                   <div className="mb-2 flex flex-row gap-1 justify-start items-end">
-                    <span className="text-2xl font-bold text-blue-900">
-                      ETH {Number(ethers.formatEther(book.priceEth)).toFixed(8)}
+                    <span className="text-2xl font-bold">
+                      {Number(ethers.formatEther(book.priceEth)).toFixed(6)} ETH
                     </span>
                     <span className="text-gray-500">(${weiToUSD(book.priceEth)})</span>
                   </div>
