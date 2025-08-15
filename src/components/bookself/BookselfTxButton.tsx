@@ -23,9 +23,15 @@ const BookselfTxButton = ({ client, book }: Props) => {
       return;
     }
 
+    const userAddress = window.prompt("Enter receive user address:", "");
+    if (!userAddress) {
+      console.warn("Closed");
+      return;
+    }
+
     try {
       const from = client.account.address;
-      const to = "";
+      const to = userAddress;
       const id = book.id;
       const value = 1;
       const dataType = "0x";
@@ -39,10 +45,12 @@ const BookselfTxButton = ({ client, book }: Props) => {
           args: [from, to, id, value, dataType],
         }),
       });
+      
 
       console.log("tx", tx);
 
       navigate("/bookselfs");
+      window.location.reload();
     } catch (error) {
       console.error("Transaction failed:", error);
     }

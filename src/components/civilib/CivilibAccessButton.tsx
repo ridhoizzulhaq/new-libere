@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { contractAddress, contractABI } from "../../smart-contract.abi";
 import { FiSlash } from "react-icons/fi";
 import { FaBookReader } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   client: any;
@@ -28,6 +29,7 @@ const CivilibAccessButton = ({
 }: Props) => {
   const [isBorrowingBook, setIsBorrowingBook] = useState(false);
   const [borrowingInfo, setBorrowingInfo] = useState<userBorrowingBook>();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAccessInfo = async () => {
@@ -102,7 +104,7 @@ const CivilibAccessButton = ({
   };
 
   const onOpenEpub = () => {
-    console.log("open epub");
+    navigate(`/read-book/${bookId}`)
   };
 
   return isBookAvailable ? (

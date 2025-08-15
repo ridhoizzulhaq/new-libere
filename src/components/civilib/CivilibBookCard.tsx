@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
 import { contractAddress, contractABI } from "../../smart-contract.abi";
 import CivilibAccessButton from "./CivilibAccessButton";
 
@@ -39,8 +38,7 @@ const CivilibBookCard = ({ book, client, clientPublic }: Props) => {
 
   return (
     <li className="w-full">
-      <NavLink
-        to={`/books/${book.id}`}
+      <div
         className="w-full flex flex-col items-center p-4 rounded border border-zinc-200"
       >
         <div className="flex">
@@ -80,7 +78,7 @@ const CivilibBookCard = ({ book, client, clientPublic }: Props) => {
             />
           </div>
         </div>
-      </NavLink>
+      </div>
     </li>
   );
 };
