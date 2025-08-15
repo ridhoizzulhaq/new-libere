@@ -46,7 +46,7 @@ const HomeScreen = () => {
     <HomeLayout>
       <div className="w-full h-full flex flex-col items-center justify-center mt-8">
         <section className="max-w-screen-xl h-fit flex flex-col px-[4rem] py-[2rem] mb-[1rem]">
-          <div className="flex flex-col items-center justify-center gap-[1rem] w-full text-center">
+          <div className="flex flex-col items-center justify-center w-full text-center">
             <h1 className="w-[80%] font-bold text-5xl leading-snug text-center">
               Join Us for On Chain E-Book Revolution
             </h1>

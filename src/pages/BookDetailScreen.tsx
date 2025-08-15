@@ -187,7 +187,7 @@ const BookDetailScreen = () => {
                       className="cursor-pointer flex flex-row gap-2 justify-center items-center bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 focus:outline-none"
                       onClick={onDonate}
                     >
-                      <BiDonateHeart /> {loading2 ? "Loading..." : "Donate to Civilib"}
+                      <BiDonateHeart /> {loading2 ? "Loading..." : "Donate to Libary"}
                     </button>
                   </div>
                 </>

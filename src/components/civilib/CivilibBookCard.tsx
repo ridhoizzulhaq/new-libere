@@ -63,9 +63,8 @@ const CivilibBookCard = ({ book, client, clientPublic }: Props) => {
             <span
               className={
                 bookLeftAmount > 0
-                  ? "bg-green-200 text-green-900"
-                  : "bg-red-200 text-red-900" +
-                    " text-xs font-semibold px-2.5 py-0.5 rounded-sm"
+                  ? "bg-green-200 text-green-900 text-xs font-semibold px-2.5 py-0.5 rounded-sm"
+                  : "bg-red-200 text-red-900 text-xs font-semibold px-2.5 py-0.5 rounded-sm"
               }
             >
               Availability: {bookLeftAmount} left
