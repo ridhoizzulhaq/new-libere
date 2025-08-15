@@ -48,7 +48,7 @@ const BookselfScreen = () => {
         const clientAddress = client?.account.address;
 
         const res = await fetch(
-          config.env.baseSepolia.baseUrl + clientAddress + "/nft?type=ERC-1155"
+          'https://base-sepolia.blockscout.com/api/v2/addresses/' + clientAddress + "/nft?type=ERC-1155"
         );
         const data = await res.json();
 

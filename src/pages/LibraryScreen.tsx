@@ -40,7 +40,7 @@ const LibraryScreen = () => {
       try {
         setLoading(true);
 
-        const res = await fetch(config.env.baseSepolia.url);
+        const res = await fetch('https://base-sepolia.blockscout.com/api/v2/addresses/0x584f1c676445707E3AF1A16b4B78186E445A8C93/nft?type=ERC-1155');
         const data = await res.json();
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
