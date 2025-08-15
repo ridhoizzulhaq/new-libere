@@ -47,7 +47,7 @@ const Navbar = () => {
     <nav className="pt-8 pb-4 border-b border-zinc-200">
       <div className="flex flex-wrap items-center justify-between max-w-screen-xl mx-auto">
         <div className="flex flex-row justify-center items-center gap-12">
-          <a href="/">
+          <a href="/books">
             <span className="text-2xl xl:text-3xl font-extrabold">Libere.</span>
           </a>
           <div className="items-center justify-between flex w-auto">
@@ -60,7 +60,27 @@ const Navbar = () => {
                     : "block text-zinc-400 p-0 hover:underline"
                 }
               >
-                Books
+                Store
+              </NavLink>
+              <NavLink
+                to="/libraries"
+                className={({ isActive }) =>
+                  isActive
+                    ? "block text-zinc-700 font-bold p-0"
+                    : "block text-zinc-400 p-0 hover:underline"
+                }
+              >
+                Library
+              </NavLink>
+              <NavLink
+                to="/bookselfs"
+                className={({ isActive }) =>
+                  isActive
+                    ? "block text-zinc-700 font-bold p-0"
+                    : "block text-zinc-400 p-0 hover:underline"
+                }
+              >
+                My Bookself
               </NavLink>
               <NavLink
                 to="/publish"
@@ -80,7 +100,10 @@ const Navbar = () => {
           {authenticated && (
             <div className="flex flex-col items-end">
               <p className="capitalize font-bold text-sm">{username} 👋 </p>
-              <span className="text-xs">({client?.account.address})</span>
+
+              {client && (
+                <span className="text-xs">({client?.account.address})</span>
+              )}
             </div>
           )}
 

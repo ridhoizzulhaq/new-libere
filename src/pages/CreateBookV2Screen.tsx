@@ -171,8 +171,12 @@ const CreateBookV2Screen = () => {
 
   return (
     <div className="w-full h-full min-h-screen bg-white flex flex-row">
-      <section className="w-[50vw] bg-zinc-200">
-        <div className="w-full flex justify-center">
+      <section
+        className="w-[50vw] bg-zinc-200 bg-cover bg-center relative flex justify-end items-center"
+        style={{ backgroundImage: "url('/images/book.jpg')" }}
+      >
+        <div className="absolute inset-0 backdrop-blur-xs"></div>
+        <div className="relative max-w-xl z-10 not-last-of-type:w-full flex justify-center flex-col">
           <div className="container mx-auto pt-12 pl-12">
             <button
               onClick={() => navigate("/books")}
@@ -180,6 +184,15 @@ const CreateBookV2Screen = () => {
             >
               &larr; Back
             </button>
+
+            <div className="w-full flex flex-col gap-3 mt-4">
+              <h2 className="text-3xl font-extrabold">Publish your book</h2>
+              <p className="w-[80%] mb-6 text-xl">
+                Share your books with the world by publishing them on-chain,
+                allowing readers to access, borrow, and enjoy your creations
+                transparently and securely.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -271,9 +284,7 @@ const CreateBookV2Screen = () => {
 
             <div className="grid grid-cols-2 gap-x-2">
               <div>
-                <label className="block text-sm font-medium">
-                  Price (USD)
-                </label>
+                <label className="block text-sm font-medium">Price (USD)</label>
                 <div className="mt-1">
                   <input
                     type="number"

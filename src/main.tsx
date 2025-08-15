@@ -9,6 +9,9 @@ import CreateBookV2Screen from "./pages/CreateBookV2Screen.tsx";
 import BookDetailScreen from "./pages/BookDetailScreen.tsx";
 
 import { Buffer } from 'buffer';
+import LibraryScreen from "./pages/LibraryScreen.tsx";
+import BookselfScreen from "./pages/BookselfScreen.tsx";
+import EpubReaderScreen from "./pages/EpubReaderScreen.tsx";
 window.Buffer = Buffer; 
 
 createRoot(document.getElementById("root")!).render(
@@ -23,7 +26,13 @@ createRoot(document.getElementById("root")!).render(
           <Route path="/books" element={<HomeScreen />} />
           <Route path="/books/:id" element={<BookDetailScreen />} />
 
+          <Route path="/libraries" element={<LibraryScreen />} />
+
+          <Route path="/bookselfs" element={<BookselfScreen />} />
+
           <Route path="/publish" element={<CreateBookV2Screen />} />
+          
+          <Route path="/read-book/:epub" element={<EpubReaderScreen />} />
 
           <Route path="*" element={<Navigate to="/books" replace />} />
         </Routes>

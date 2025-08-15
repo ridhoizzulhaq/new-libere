@@ -8,6 +8,8 @@ import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { baseSepolia } from "viem/chains";
 import { contractABI, contractAddress } from "../smart-contract.abi";
 import { encodeFunctionData } from "viem";
+import { FaBookReader } from "react-icons/fa";
+import { BiDonateHeart } from "react-icons/bi";
 
 const baseUrl = config.env.supabase.baseUrl;
 
@@ -16,6 +18,7 @@ const BookDetailScreen = () => {
   const { client } = useSmartWallets();
   const [book, setBook] = useState<Book>();
   const [loading, setLoading] = useState(false);
+  const [loading2, setLoading2] = useState(false);
   const navigate = useNavigate();
 
   const ethPrice = ETH_PRICE;
@@ -83,11 +86,54 @@ const BookDetailScreen = () => {
     }
   };
 
+  const onDonate = async () => {
+    setLoading2(true);
+    if (!client) {
+      console.error("No smart account client found");
+      setLoading2(false);
+      return;
+    }
+
+    if (!book) {
+      console.error("No Book ID");
+      setLoading2(false);
+      return;
+    }
+
+    try {
+      const id = book.id;
+      const amount = 1;
+
+      const tx = await client.sendTransaction({
+        chain: baseSepolia,
+        to: contractAddress,
+        value: BigInt(book.priceEth),
+        data: encodeFunctionData({
+          abi: contractABI,
+          functionName: "purchaseItemForLibrary",
+          args: [id, amount],
+        }),
+      });
+
+      console.log("tx", tx);
+
+      setLoading2(false);
+    } catch (error) {
+      setLoading2(false);
+      console.error("Transaction failed:", error);
+    }
+  };
+
   return (
     <HomeLayout>
       <div className="w-full flex justify-center">
         <div className="container mx-auto pt-9 max-w-screen-xl">
-          <button onClick={() => navigate("/books")} className="cursor-pointer hover:underline">&larr; Back</button>
+          <button
+            onClick={() => navigate("/books")}
+            className="cursor-pointer hover:underline"
+          >
+            &larr; Back
+          </button>
         </div>
       </div>
       <div className="w-full flex justify-center">
@@ -114,10 +160,12 @@ const BookDetailScreen = () => {
                   <p className="text-zinc-500 mb-4">ID: {book.id}</p>
                   <p className="text-gray-700 mb-6">{book.description}</p>
                   <div className="mb-2 flex flex-row gap-1 justify-start items-end">
-                    <span className="text-2xl font-bold text-blue-900">
-                      ETH {Number(ethers.formatEther(book.priceEth)).toFixed(8)}
+                    <span className="text-2xl font-bold">
+                      {Number(ethers.formatEther(book.priceEth)).toFixed(6)} ETH
                     </span>
-                    <span className="text-gray-500">(${weiToUSD(book.priceEth)})</span>
+                    <span className="text-gray-500">
+                      (${weiToUSD(book.priceEth)})
+                    </span>
                   </div>
                   <p className="text-zinc-700">
                     <span className="text-sm text-zinc-400">Author:</span>{" "}
@@ -127,12 +175,19 @@ const BookDetailScreen = () => {
                     <span className="text-sm text-zinc-400">Publisher:</span>{" "}
                     {book.publisher}
                   </p>
-                  <div className="flex space-x-4 mt-8">
+                  <div className="flex space-x-3 mt-8 flex-row">
                     <button
-                      className="cursor-pointer bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 focus:outline-none"
+                      className="cursor-pointer flex flex-row gap-2 justify-center items-center bg-dark-100 text-white px-6 py-2 rounded hover:bg-zinc-700 focus:outline-none"
                       onClick={onMintBook}
                     >
-                      {loading ? "Loading..." : "Get Book"}
+                      <FaBookReader /> {loading ? "Loading..." : "Get Book"}
+                    </button>
+
+                    <button
+                      className="cursor-pointer flex flex-row gap-2 justify-center items-center bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 focus:outline-none"
+                      onClick={onDonate}
+                    >
+                      <BiDonateHeart /> {loading2 ? "Loading..." : "Donate to Libary"}
                     </button>
                   </div>
                 </>
