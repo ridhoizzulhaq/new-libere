@@ -272,7 +272,7 @@ const CreateBookV2Screen = () => {
             <div className="grid grid-cols-2 gap-x-2">
               <div>
                 <label className="block text-sm font-medium">
-                  Price ($USD)
+                  Price (USD)
                 </label>
                 <div className="mt-1">
                   <input
@@ -288,7 +288,7 @@ const CreateBookV2Screen = () => {
                 </div>
                 {ethPrice > 0 && formData.price && (
                   <p className="text-xs text-gray-500 mt-1">
-                    ≈ {ethAmount} ETH (Current ETH price: ${ethPrice.toFixed(2)}
+                    ≈ {ethAmount} ETH ($Current ETH price: {ethPrice.toFixed(2)}
                     )
                   </p>
                 )}

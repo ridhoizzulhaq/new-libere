@@ -113,10 +113,11 @@ const BookDetailScreen = () => {
                   <h2 className="text-3xl font-bold">{book.title}</h2>
                   <p className="text-zinc-500 mb-4">ID: {book.id}</p>
                   <p className="text-gray-700 mb-6">{book.description}</p>
-                  <div className="mb-2">
-                    <span className="text-2xl font-bold">
-                      ${weiToUSD(book.priceEth)}
+                  <div className="mb-2 flex flex-row gap-1 justify-start items-end">
+                    <span className="text-2xl font-bold text-blue-900">
+                      ETH {Number(ethers.formatEther(book.priceEth)).toFixed(8)}
                     </span>
+                    <span className="text-gray-500">(${weiToUSD(book.priceEth)})</span>
                   </div>
                   <p className="text-zinc-700">
                     <span className="text-sm text-zinc-400">Author:</span>{" "}
