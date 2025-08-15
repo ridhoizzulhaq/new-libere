@@ -101,7 +101,6 @@ const BookDetailScreen = () => {
     }
 
     try {
-      const accountAddress = client.account.address;
       const id = book.id;
       const amount = 1;
 
@@ -111,8 +110,8 @@ const BookDetailScreen = () => {
         value: BigInt(book.priceEth),
         data: encodeFunctionData({
           abi: contractABI,
-          functionName: "ItemPurchasedForLibrary",
-          args: [accountAddress, id, amount],
+          functionName: "purchaseItemForLibrary",
+          args: [id, amount],
         }),
       });
 

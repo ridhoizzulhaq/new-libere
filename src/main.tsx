@@ -9,6 +9,7 @@ import CreateBookV2Screen from "./pages/CreateBookV2Screen.tsx";
 import BookDetailScreen from "./pages/BookDetailScreen.tsx";
 
 import { Buffer } from 'buffer';
+import LibraryScreen from "./pages/LibraryScreen.tsx";
 window.Buffer = Buffer; 
 
 createRoot(document.getElementById("root")!).render(
@@ -22,6 +23,8 @@ createRoot(document.getElementById("root")!).render(
 
           <Route path="/books" element={<HomeScreen />} />
           <Route path="/books/:id" element={<BookDetailScreen />} />
+
+          <Route path="/libraries" element={<LibraryScreen />} />
 
           <Route path="/publish" element={<CreateBookV2Screen />} />
 

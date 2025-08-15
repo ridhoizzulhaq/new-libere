@@ -60,7 +60,17 @@ const Navbar = () => {
                     : "block text-zinc-400 p-0 hover:underline"
                 }
               >
-                Books
+                Store
+              </NavLink>
+              <NavLink
+                to="/libraries"
+                className={({ isActive }) =>
+                  isActive
+                    ? "block text-zinc-700 font-bold p-0"
+                    : "block text-zinc-400 p-0 hover:underline"
+                }
+              >
+                Library
               </NavLink>
               <NavLink
                 to="/publish"
