@@ -1,5 +1,6 @@
 import React from "react";
 import Navbar from "../Navbar";
+import CurrencySelector from "../CurrencySelector";
 
 interface HomeLayoutProps {
   children: React.ReactNode;
@@ -7,10 +8,13 @@ interface HomeLayoutProps {
 
 const HomeLayout: React.FC<HomeLayoutProps> = ({ children }) => {
   return (
-    <main className="w-full h-fit mb-[5rem] min-h-screen bg-white flex-1 flex-col items-center justify-center px-5">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-      {children}
-    </main>
+      <main className="flex-1 w-full px-5">
+        {children}
+      </main>
+      <CurrencySelector />
+    </div>
   );
 };
 

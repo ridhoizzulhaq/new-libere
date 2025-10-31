@@ -12,31 +12,36 @@ import { Buffer } from 'buffer';
 import LibraryScreen from "./pages/LibraryScreen.tsx";
 import BookselfScreen from "./pages/BookselfScreen.tsx";
 import EpubReaderScreen from "./pages/EpubReaderScreen.tsx";
-window.Buffer = Buffer; 
+import { CurrencyProvider } from "./contexts/CurrencyContext.tsx";
+import ProtectedRoute from "./routes/ProtectedRoute.tsx";
+window.Buffer = Buffer;
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Providers>
-      <BrowserRouter>
+      <CurrencyProvider>
+        <BrowserRouter>
         <Routes>
+          {/* Public routes - accessible without login */}
           <Route path="/" element={<Navigate to="/books" replace />} />
-
           <Route path="/auth" element={<AuthScreen />} />
-
           <Route path="/books" element={<HomeScreen />} />
           <Route path="/books/:id" element={<BookDetailScreen />} />
 
-          <Route path="/libraries" element={<LibraryScreen />} />
+          {/* Protected routes - require authentication */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/libraries" element={<LibraryScreen />} />
+            <Route path="/bookselfs" element={<BookselfScreen />} />
+            {/* Temporarily hidden - Publish Book route */}
+            {/* <Route path="/publish" element={<CreateBookV2Screen />} /> */}
+            <Route path="/read-book/:id" element={<EpubReaderScreen />} />
+          </Route>
 
-          <Route path="/bookselfs" element={<BookselfScreen />} />
-
-          <Route path="/publish" element={<CreateBookV2Screen />} />
-          
-          <Route path="/read-book/:epub" element={<EpubReaderScreen />} />
-
+          {/* Fallback redirect */}
           <Route path="*" element={<Navigate to="/books" replace />} />
         </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </CurrencyProvider>
     </Providers>
   </StrictMode>
 );

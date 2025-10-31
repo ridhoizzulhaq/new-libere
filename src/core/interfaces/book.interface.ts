@@ -10,4 +10,5 @@ export interface Book {
     royalty: number;
     addressReciepent: string;
     addressRoyaltyRecipient: string;
+    quantity?: number; // Jumlah NFT yang dimiliki (optional, hanya ada di bookshelf)
 }

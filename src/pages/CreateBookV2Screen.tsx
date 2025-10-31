@@ -1,16 +1,14 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import config from "../libs/config";
 import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { baseSepolia } from "viem/chains";
 import { contractABI, contractAddress } from "../smart-contract.abi";
 import { encodeFunctionData } from "viem";
 import dayjs from "dayjs";
-import { ethers } from "ethers";
 import { useNavigate } from "react-router-dom";
 import type { Book } from "../core/interfaces";
-import { ETH_PRICE } from "../core/constants";
-import { usePrivy } from "@privy-io/react-auth";
+import { USDC_DECIMALS } from "../usdc-token";
 
 const initialFormData = {
   title: "",
@@ -32,7 +30,6 @@ const baseUrl = config.env.supabase.baseUrl;
 
 const CreateBookV2Screen = () => {
   const navigate = useNavigate();
-  const { authenticated } = usePrivy();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -43,18 +40,20 @@ const CreateBookV2Screen = () => {
     price: "",
     royaltyValue: "",
   });
-  const ethPrice = ETH_PRICE;
-  const [ethAmount, setEthAmount] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
+  const [error, setError] = useState("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { client } = useSmartWallets();
 
   const handleResetForm = () => {
     setFormData(initialFormData);
+    setImagePreview(null);
+    setError("");
+    setLoadingMessage("");
   };
 
-  useEffect(() => {
-    if (!authenticated) navigate("/auth");
-  }, [authenticated, navigate]);
+  // Auth check removed - ProtectedRoute handles this
 
   const uploadFileToIPFS = async (file: File) => {
     try {
@@ -81,43 +80,73 @@ const CreateBookV2Screen = () => {
     if (type === "file") {
       const target = e.target as HTMLInputElement;
       if (target.files && target.files.length > 0) {
-        setFormData((prev) => ({ ...prev, [name]: target.files![0] }));
+        const file = target.files[0];
+        setFormData((prev) => ({ ...prev, [name]: file }));
+
+        // Create preview for image files
+        if (name === "image" && file.type.startsWith("image/")) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+          };
+          reader.readAsDataURL(file);
+        }
       }
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
-
-      if (name === "price" && ethPrice > 0) {
-        const ethValue = parseFloat(value) / ethPrice;
-        setEthAmount(isNaN(ethValue) ? "" : ethValue.toString());
-      }
     }
+
+    // Clear error when user starts typing
+    if (error) setError("");
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError("");
 
-    setLoading(true);
+    // Validation
     if (!client) {
-      console.error("No smart account client found");
-      setLoading(false);
+      setError("Please connect your wallet first");
       return;
     }
 
-    if (!formData.image && !formData.epub) {
-      console.error("No image cover and epub file");
-      setLoading(false);
+    if (!formData.image || !formData.epub) {
+      setError("Please upload both cover image and EPUB file");
+      return;
+    }
+
+    if (Number(formData.royaltyValue) < 0 || Number(formData.royaltyValue) > 10) {
+      setError("Royalty value must be between 0% and 10%");
+      return;
+    }
+
+    if (Number(formData.price) <= 0) {
+      setError("Price must be greater than 0");
       return;
     }
 
     try {
+      setLoading(true);
+
+      // Upload cover image to IPFS
+      setLoadingMessage("Uploading cover image to IPFS...");
+      const metadataUri = await uploadFileToIPFS(formData.image!);
+
+      // Upload EPUB to IPFS
+      setLoadingMessage("Uploading EPUB file to IPFS...");
+      const epubData = await uploadFileToIPFS(formData.epub!);
+
+      // Prepare transaction data
       const id = dayjs().unix();
-      const price = ethers.parseEther(Number(ethAmount).toFixed(18));
+      // Convert USDC price to smallest unit (6 decimals)
+      // Example: 10 USDC = 10 * 10^6 = 10000000
+      const priceInUSDC = Math.floor(Number(formData.price) * Math.pow(10, USDC_DECIMALS));
       const addressRecipient = client.account.address;
       const addressRoyaltyRecipient = client.account.address;
       const royaltyPercent = Number(formData.royaltyValue) * 100;
-      const metadataUri = await uploadFileToIPFS(formData.image!);
-      const epubData = await uploadFileToIPFS(formData.epub!);
 
+      // Send blockchain transaction
+      setLoadingMessage("Creating book on blockchain...");
       const tx = await client.sendTransaction({
         chain: baseSepolia,
         to: contractAddress,
@@ -125,8 +154,8 @@ const CreateBookV2Screen = () => {
           abi: contractABI,
           functionName: "createItem",
           args: [
-            id,
-            price,
+            BigInt(id),
+            BigInt(priceInUSDC),
             addressRecipient,
             addressRoyaltyRecipient,
             royaltyPercent,
@@ -135,8 +164,10 @@ const CreateBookV2Screen = () => {
         }),
       });
 
-      console.log("tx", tx);
+      console.log("Transaction hash:", tx);
 
+      // Save to database
+      setLoadingMessage("Saving book metadata...");
       const data: Book = {
         id: id,
         title: formData.title,
@@ -145,27 +176,34 @@ const CreateBookV2Screen = () => {
         description: formData.description,
         metadataUri: metadataUri,
         epub: epubData,
-        priceEth: price.toString(),
+        priceEth: priceInUSDC.toString(), // Storing USDC price (with 6 decimals)
         royalty: royaltyPercent,
         addressReciepent: addressRecipient,
         addressRoyaltyRecipient: addressRoyaltyRecipient,
       };
 
-      const uploadToDB = await axios.post(`${baseUrl}/rest/v1/Book`, data, {
+      await axios.post(`${baseUrl}/rest/v1/Book`, data, {
         headers: {
           apiKey: config.env.supabase.apiKey,
           "Content-Type": "application/json",
         },
       });
 
-      console.warn("updateToDB", uploadToDB);
-      setLoading(false);
+      setLoadingMessage("Book published successfully!");
 
-      handleResetForm();
-      navigate("/books");
-    } catch (error) {
+      // Reset form and navigate
+      setTimeout(() => {
+        handleResetForm();
+        navigate("/books");
+      }, 1500);
+
+    } catch (error: any) {
+      console.error("Publication failed:", error);
+      setError(
+        error.message || "Failed to publish book. Please try again."
+      );
       setLoading(false);
-      console.error("Transaction failed:", error);
+      setLoadingMessage("");
     }
   };
 
@@ -200,6 +238,21 @@ const CreateBookV2Screen = () => {
         <div className="w-full max-w-xl">
           <form onSubmit={handleSubmit} className="p-8 w-full space-y-4">
             <h2 className="text-2xl font-semibold mb-6">Add New Item</h2>
+
+            {/* Error Message */}
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            {/* Loading Message */}
+            {loading && loadingMessage && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-600">{loadingMessage}</p>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium">Title</label>
               <div className="mt-1">
@@ -268,6 +321,16 @@ const CreateBookV2Screen = () => {
                 required
                 className="mt-2 block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-zinc-200 file:text-zinc-800 hover:file:bg-zinc-300 cursor-pointer"
               />
+              {imagePreview && (
+                <div className="mt-3">
+                  <p className="text-xs text-gray-500 mb-2">Preview:</p>
+                  <img
+                    src={imagePreview}
+                    alt="Cover preview"
+                    className="w-32 h-48 object-cover rounded border border-zinc-300"
+                  />
+                </div>
+              )}
             </div>
 
             <div>
@@ -280,11 +343,16 @@ const CreateBookV2Screen = () => {
                 required
                 className="mt-2 block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-zinc-200 file:text-zinc-800 hover:file:bg-zinc-300 cursor-pointer"
               />
+              {formData.epub && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Selected: {(formData.epub as File).name}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-x-2">
               <div>
-                <label className="block text-sm font-medium">Price (USD)</label>
+                <label className="block text-sm font-medium">Price (USDC)</label>
                 <div className="mt-1">
                   <input
                     type="number"
@@ -292,15 +360,15 @@ const CreateBookV2Screen = () => {
                     value={formData.price}
                     onChange={handleChange}
                     step="0.01"
-                    placeholder="Enter book price in USD"
+                    min="0.01"
+                    placeholder="Enter book price in USDC"
                     required
                     className="block w-full h-10 px-3 mt-1 text-sm text-dark-100 border border-zinc-300 focus:outline-none rounded focus:border-zinc-800"
                   />
                 </div>
-                {ethPrice > 0 && formData.price && (
+                {formData.price && (
                   <p className="text-xs text-gray-500 mt-1">
-                    ≈ {ethAmount} ETH ($Current ETH price: {ethPrice.toFixed(2)}
-                    )
+                    = {(Number(formData.price) * Math.pow(10, USDC_DECIMALS)).toLocaleString()} USDC units
                   </p>
                 )}
               </div>
@@ -321,13 +389,23 @@ const CreateBookV2Screen = () => {
                 />
               </div>
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full mt-4 bg-zinc-800 font-bold text-white py-2 px-4 rounded focus:outline-none disabled:bg-zinc-400 disabled:cursor-progress"
-            >
-              {loading ? "Loading..." : "Submit"}
-            </button>
+            <div className="flex gap-2 mt-6">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-zinc-800 font-bold text-white py-2 px-4 rounded focus:outline-none hover:bg-zinc-700 disabled:bg-zinc-400 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? (loadingMessage || "Processing...") : "Publish Book"}
+              </button>
+              <button
+                type="button"
+                onClick={handleResetForm}
+                disabled={loading}
+                className="px-6 py-2 border border-zinc-300 text-zinc-700 rounded hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Reset
+              </button>
+            </div>
           </form>
         </div>
       </section>

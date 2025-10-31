@@ -2,9 +2,10 @@
 import { encodeFunctionData } from "viem";
 import { baseSepolia } from "viem/chains";
 import { useEffect, useState } from "react";
-import { contractAddress, contractABI } from "../../smart-contract.abi";
+import { libraryPoolAddress, libraryPoolABI } from "../../library-pool.abi";
 import { FiSlash } from "react-icons/fi";
 import { FaBookReader } from "react-icons/fa";
+import { BiArrowBack } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
@@ -13,11 +14,16 @@ interface Props {
   isBookAvailable: boolean;
   bookId: number;
   smartWalletAddress: string;
+  onBorrowStatusChange?: (expiry: number | null) => void;
 }
 
-interface userBorrowingBook {
-  id: number;
-  date: number;
+interface BorrowRecord {
+  recordId: number;
+  tokenId: number;
+  owner: string;
+  user: string;
+  amount: number;
+  expiry: number; // Unix timestamp
 }
 
 const CivilibAccessButton = ({
@@ -26,80 +32,175 @@ const CivilibAccessButton = ({
   isBookAvailable,
   bookId,
   smartWalletAddress,
+  onBorrowStatusChange,
 }: Props) => {
-  const [isBorrowingBook, setIsBorrowingBook] = useState(false);
-  const [borrowingInfo, setBorrowingInfo] = useState<userBorrowingBook>();
+  const [hasBorrowed, setHasBorrowed] = useState(false);
+  const [borrowRecord, setBorrowRecord] = useState<BorrowRecord | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
   const navigate = useNavigate();
 
+  // Check if user has borrowed this book using getActiveBorrows
   useEffect(() => {
-    const fetchAccessInfo = async () => {
+    const checkBorrowStatus = async () => {
+      if (!clientPublic || !smartWalletAddress) return;
+
       try {
-        const res = await clientPublic.readContract({
-          address: contractAddress,
-          abi: contractABI,
-          functionName: "hasAccess",
-          args: [smartWalletAddress, bookId],
-        });
-
-        setIsBorrowingBook(res as boolean);
-      } catch (error) {
-        console.error("Error fetching has access info:", error);
-      }
-    };
-
-    fetchAccessInfo();
-  }, [bookId, clientPublic, smartWalletAddress]);
-
-  useEffect(() => {
-    if (!isBorrowingBook) return;
-
-    const fetchBorrowingInfo = async () => {
-      try {
-        const res: any = await clientPublic.readContract({
-          address: contractAddress,
-          abi: contractABI,
-          functionName: "accessRegistry",
+        // Get all active borrows for this user
+        const activeBorrows: any = await clientPublic.readContract({
+          address: libraryPoolAddress,
+          abi: libraryPoolABI,
+          functionName: "getActiveBorrows",
           args: [smartWalletAddress],
         });
 
-        setBorrowingInfo({
-          id: res[0],
-          date: res[1],
-        });
+        // Check if user has borrowed this specific book
+        const borrowForThisBook = activeBorrows.find(
+          (borrow: any) => Number(borrow.tokenId) === bookId
+        );
+
+        if (borrowForThisBook) {
+          setHasBorrowed(true);
+          const expiryTimestamp = Number(borrowForThisBook.expiry);
+          setBorrowRecord({
+            recordId: Number(borrowForThisBook.recordId),
+            tokenId: Number(borrowForThisBook.tokenId),
+            owner: libraryPoolAddress,
+            user: smartWalletAddress,
+            amount: 1,
+            expiry: expiryTimestamp,
+          });
+
+          // Notify parent component about expiry
+          if (onBorrowStatusChange) {
+            onBorrowStatusChange(expiryTimestamp);
+          }
+        } else {
+          setHasBorrowed(false);
+          setBorrowRecord(null);
+          if (onBorrowStatusChange) {
+            onBorrowStatusChange(null);
+          }
+        }
       } catch (error) {
-        console.error("Error fetching borrowing info:", error);
+        console.error("Error checking borrow status:", error);
+        setHasBorrowed(false);
+        setBorrowRecord(null);
       }
     };
 
-    fetchBorrowingInfo();
-  }, [clientPublic, isBorrowingBook, smartWalletAddress]);
+    checkBorrowStatus();
+  }, [bookId, clientPublic, smartWalletAddress, onBorrowStatusChange]);
 
-  useEffect(() => {
-    if (!borrowingInfo) return;
-
-    console.log("borrowingInfo", borrowingInfo);
-  }, [borrowingInfo]);
-
-  const onRentAccess = async () => {
+  // Borrow book from library pool
+  const onBorrowBook = async () => {
     if (!client) {
-      console.error("No smart account client found");
+      setStatusMessage("Please connect your wallet");
       return;
     }
+
+    setLoading(true);
+    setStatusMessage("Borrowing book...");
 
     try {
       const tx = await client.sendTransaction({
         chain: baseSepolia,
-        to: contractAddress,
+        to: libraryPoolAddress,
         data: encodeFunctionData({
-          abi: contractABI,
-          functionName: "rentAccess",
-          args: [bookId],
+          abi: libraryPoolABI,
+          functionName: "borrowFromPool",
+          args: [BigInt(bookId)],
         }),
       });
 
-      console.log("tx", tx);
-    } catch (error) {
-      console.error("Error tx rent acess info:", error);
+      console.log("Borrow tx:", tx);
+      setStatusMessage("Book borrowed successfully!");
+
+      // Refresh borrow status after a short delay to allow blockchain to update
+      setTimeout(async () => {
+        setStatusMessage("");
+        setLoading(false);
+
+        // Fetch updated borrow status with expiry
+        try {
+          const activeBorrows: any = await clientPublic.readContract({
+            address: libraryPoolAddress,
+            abi: libraryPoolABI,
+            functionName: "getActiveBorrows",
+            args: [smartWalletAddress],
+          });
+
+          const borrowForThisBook = activeBorrows.find(
+            (borrow: any) => Number(borrow.tokenId) === bookId
+          );
+
+          if (borrowForThisBook) {
+            setHasBorrowed(true);
+            const expiryTimestamp = Number(borrowForThisBook.expiry);
+            setBorrowRecord({
+              recordId: Number(borrowForThisBook.recordId),
+              tokenId: Number(borrowForThisBook.tokenId),
+              owner: libraryPoolAddress,
+              user: smartWalletAddress,
+              amount: 1,
+              expiry: expiryTimestamp,
+            });
+
+            if (onBorrowStatusChange) {
+              onBorrowStatusChange(expiryTimestamp);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching updated borrow status:", error);
+        }
+      }, 2000);
+    } catch (error: any) {
+      console.error("Error borrowing book:", error);
+      setStatusMessage(`Error: ${error.message || "Failed to borrow"}`);
+      setLoading(false);
+    }
+  };
+
+  // Return borrowed book
+  const onReturnBook = async () => {
+    if (!client) {
+      setStatusMessage("Please connect your wallet");
+      return;
+    }
+
+    setLoading(true);
+    setStatusMessage("Returning book...");
+
+    try {
+      const tx = await client.sendTransaction({
+        chain: baseSepolia,
+        to: libraryPoolAddress,
+        data: encodeFunctionData({
+          abi: libraryPoolABI,
+          functionName: "returnMyBorrow",
+          args: [BigInt(bookId)],
+        }),
+      });
+
+      console.log("Return tx:", tx);
+      setStatusMessage("Book returned successfully!");
+
+      // Refresh borrow status after a short delay
+      setTimeout(() => {
+        setHasBorrowed(false);
+        setBorrowRecord(null);
+        setStatusMessage("");
+        setLoading(false);
+
+        // Notify parent that book was returned
+        if (onBorrowStatusChange) {
+          onBorrowStatusChange(null);
+        }
+      }, 2000);
+    } catch (error: any) {
+      console.error("Error returning book:", error);
+      setStatusMessage(`Error: ${error.message || "Failed to return"}`);
+      setLoading(false);
     }
   };
 
@@ -107,33 +208,62 @@ const CivilibAccessButton = ({
     navigate(`/read-book/${bookId}`)
   };
 
-  return isBookAvailable ? (
-    isBorrowingBook ? (
-      <button
-        onClick={onOpenEpub}
-        className="cursor-pointer flex flex-row gap-2 justify-center items-center w-full bg-white border border-dark-100 text-dark-100 px-2.5 py-[.25rem] rounded-sm disabled:bg-zinc-200 disabled:cursor-not-allowed
-                  disabled:border-none disabled:text-zinc-400"
-      >
-        <FaBookReader /> ReadBook
-      </button>
-    ) : (
-      <button
-        onClick={onRentAccess}
-        className="cursor-pointer flex flex-row gap-2 justify-center items-center w-full bg-white border border-dark-100 text-dark-100 px-2.5 py-[.25rem] rounded-sm disabled:bg-zinc-200 disabled:cursor-not-allowed
-                  disabled:border-none disabled:text-zinc-400"
-      >
-        <FaBookReader /> Borrow
-      </button>
-    )
-  ) : (
-    <button
-      disabled={true}
-      className="cursor-pointer flex flex-row gap-2 justify-center items-center w-full bg-white border border-dark-100 text-dark-100 px-2.5 py-[.25rem] rounded-sm disabled:bg-zinc-200 disabled:cursor-not-allowed
-                disabled:border-none disabled:text-zinc-400"
-    >
-      <FiSlash />
-      Not available
-    </button>
+  return (
+    <div className="w-full space-y-2">
+      {/* Status Message */}
+      {statusMessage && (
+        <div className={`text-xs text-center py-1 rounded ${
+          statusMessage.includes("Error")
+            ? "bg-red-50 text-red-700"
+            : statusMessage.includes("successfully")
+            ? "bg-green-50 text-green-700"
+            : "bg-blue-50 text-blue-700"
+        }`}>
+          {statusMessage}
+        </div>
+      )}
+
+      {/* Buttons */}
+      {isBookAvailable ? (
+        hasBorrowed ? (
+          // User has borrowed this book - Show Read & Return buttons
+          <div className="flex gap-2 w-full">
+            <button
+              onClick={onOpenEpub}
+              disabled={loading}
+              className="flex-1 cursor-pointer flex flex-row gap-2 justify-center items-center bg-zinc-900 text-white px-2.5 py-2 rounded-md disabled:bg-zinc-400 disabled:cursor-not-allowed hover:bg-zinc-800 transition-colors font-medium"
+            >
+              <FaBookReader /> Read Book
+            </button>
+            <button
+              onClick={onReturnBook}
+              disabled={loading}
+              className="cursor-pointer flex flex-row gap-2 justify-center items-center bg-white border-2 border-zinc-900 text-zinc-900 px-3 py-2 rounded-md disabled:bg-zinc-200 disabled:cursor-not-allowed disabled:border-zinc-400 disabled:text-zinc-400 hover:bg-zinc-900 hover:text-white transition-colors font-medium"
+            >
+              <BiArrowBack /> Return
+            </button>
+          </div>
+        ) : (
+          // User hasn't borrowed - Show Borrow button
+          <button
+            onClick={onBorrowBook}
+            disabled={loading}
+            className="cursor-pointer flex flex-row gap-2 justify-center items-center w-full bg-zinc-900 text-white px-2.5 py-2 rounded-md disabled:bg-zinc-400 disabled:cursor-not-allowed hover:bg-zinc-800 transition-colors font-medium"
+          >
+            <FaBookReader /> {loading ? "Borrowing..." : "Borrow"}
+          </button>
+        )
+      ) : (
+        // Book not available
+        <button
+          disabled={true}
+          className="cursor-pointer flex flex-row gap-2 justify-center items-center w-full bg-white border border-zinc-300 text-zinc-400 px-2.5 py-2 rounded-md disabled:bg-zinc-100 disabled:cursor-not-allowed font-medium"
+        >
+          <FiSlash />
+          Not available
+        </button>
+      )}
+    </div>
   );
 };
 

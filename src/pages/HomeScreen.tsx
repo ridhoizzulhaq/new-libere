@@ -14,11 +14,8 @@ const HomeScreen = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
-  const { authenticated } = usePrivy();
 
-  useEffect(() => {
-    if (!authenticated) navigate("/auth");
-  }, [authenticated, navigate]);
+  // Removed auth redirect - allow guests to browse store
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -36,6 +33,7 @@ const HomeScreen = () => {
         setLoading(false);
       } catch (err) {
         console.error("Failed to get Books Data", err);
+        setBooks([]);
         setLoading(false);
       }
     };
@@ -44,13 +42,13 @@ const HomeScreen = () => {
 
   return (
     <HomeLayout>
-      <div className="w-full h-full flex flex-col items-center justify-center mt-8">
-        <section className="max-w-screen-xl h-fit flex flex-col px-[4rem] py-[2rem] mb-[1rem]">
+      <div className="w-full h-full flex flex-col items-center justify-center mt-16">
+        <section className="max-w-screen-xl h-fit flex flex-col px-6 py-8 mb-8">
           <div className="flex flex-col items-center justify-center w-full text-center">
-            <h1 className="w-[80%] font-bold text-5xl leading-snug text-center">
+            <h1 className="w-[80%] font-bold text-4xl md:text-5xl leading-tight text-center text-zinc-900">
               Join Us for On Chain E-Book Revolution
             </h1>
-            <p className="w-[80%] text-lg text-center">
+            <p className="w-[80%] text-base md:text-lg text-center text-zinc-600 mt-4 leading-relaxed">
               Libere focuses on NFT based e-book distribution for both readers
               and libraries. Readers buy for true ownership, while donations add
               copies that directly expand public borrowing capacity. The
@@ -61,8 +59,8 @@ const HomeScreen = () => {
         </section>
       </div>
 
-      <div className="w-full h-full flex items-center justify-center mb-5">
-        <div className="w-full max-w-screen-xl h-full flex flex-row gap-5 justify-center items-center">
+      <div className="w-full h-full flex items-center justify-center mb-8">
+        <div className="w-full max-w-screen-xl h-full flex flex-row gap-6 justify-center items-center px-6">
           <NavLink
             to={"/libraries"}
             className="w-full flex justify-start items-center rounded-lg relative p-12 bg-cover bg-center"
@@ -102,20 +100,21 @@ const HomeScreen = () => {
         </div>
       </div>
 
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="w-full max-w-screen-xl h-full flex justify-center items-center">
+      {/* Temporarily hidden - Publish Book section */}
+      {/* <div className="w-full h-full flex items-center justify-center mb-8">
+        <div className="w-full max-w-screen-xl h-full flex justify-center items-center px-6">
           <NavLink
             to={"/publish"}
-            className="w-full flex justify-start items-center rounded-lg relative p-12 bg-cover bg-center"
+            className="w-full flex justify-start items-center rounded-lg relative p-12 bg-cover bg-center transition-transform hover:scale-[1.01]"
             style={{ backgroundImage: "url('/images/book.jpg')" }}
           >
             <div className="absolute inset-0 bg-black/40 backdrop-blur-xs rounded-lg"></div>
             <div className="relative z-10 flex flex-col gap-4 text-white">
-              <h2 className="text-5xl font-extrabold flex flex-row gap-3">
+              <h2 className="text-4xl md:text-5xl font-extrabold flex flex-row gap-3">
                 <PiHandDepositBold />
                 Publish Book
               </h2>
-              <p className="text-lg max-w-2xl">
+              <p className="text-base md:text-lg max-w-2xl">
                 Share your books with the world by publishing them on-chain,
                 allowing readers to access, borrow, and enjoy your creations
                 transparently and securely.
@@ -123,10 +122,10 @@ const HomeScreen = () => {
             </div>
           </NavLink>
         </div>
-      </div>
+      </div> */}
 
-      <div className="w-full h-fit flex items-center justify-center mt-12 ">
-        <section className="w-full max-w-screen-xl">
+      <div className="w-full h-fit flex items-center justify-center mt-16">
+        <section className="w-full max-w-screen-xl px-6">
           <BookList books={books} isLoading={loading} />
         </section>
       </div>

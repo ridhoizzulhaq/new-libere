@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BiDonateHeart } from "react-icons/bi";
+import { useState } from "react";
+import { BiTransfer } from "react-icons/bi";
 import { baseSepolia } from "viem/chains";
 import { encodeFunctionData } from "viem";
 import { contractABI, contractAddress } from "../../smart-contract.abi";
@@ -12,6 +13,8 @@ interface Props {
 
 const BookselfTxButton = ({ client, book }: Props) => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
   const onTransferBook = async () => {
     if (!client) {
       console.error("No smart account client found");
@@ -23,13 +26,14 @@ const BookselfTxButton = ({ client, book }: Props) => {
       return;
     }
 
-    const userAddress = window.prompt("Enter receive user address:", "");
+    const userAddress = window.prompt("Enter recipient address:", "");
     if (!userAddress) {
-      console.warn("Closed");
+      console.warn("Transfer cancelled");
       return;
     }
 
     try {
+      setLoading(true);
       const from = client.account.address;
       const to = userAddress;
       const id = book.id;
@@ -45,23 +49,27 @@ const BookselfTxButton = ({ client, book }: Props) => {
           args: [from, to, id, value, dataType],
         }),
       });
-      
 
-      console.log("tx", tx);
+      console.log("Transfer tx:", tx);
 
-      navigate("/bookselfs");
-      window.location.reload();
+      setTimeout(() => {
+        navigate("/bookselfs");
+        window.location.reload();
+      }, 1000);
     } catch (error) {
-      console.error("Transaction failed:", error);
+      console.error("Transfer failed:", error);
+      setLoading(false);
     }
   };
+
   return (
     <button
       onClick={onTransferBook}
-      className="cursor-pointer flex flex-row gap-2 justify-center items-center w-full bg-green-600 hover:bg-green-700 text-white px-2.5 py-[.25rem] rounded-sm"
+      disabled={loading}
+      className="cursor-pointer flex flex-row gap-1.5 justify-center items-center w-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 px-2.5 py-1.5 rounded text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <BiDonateHeart />
-      Transfer Book
+      <BiTransfer className="text-sm" />
+      {loading ? "Transferring..." : "Transfer"}
     </button>
   );
 };

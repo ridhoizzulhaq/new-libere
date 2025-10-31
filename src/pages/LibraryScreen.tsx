@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import config from "../libs/config";
 import CivilibBookList from "../components/civilib/CivilibBookList";
 import { useNavigate } from "react-router-dom";
+import { libraryPoolAddress } from "../library-pool.abi";
 
 const baseUrl = config.env.supabase.baseUrl;
 
@@ -40,7 +41,7 @@ const LibraryScreen = () => {
       try {
         setLoading(true);
 
-        const res = await fetch('https://base-sepolia.blockscout.com/api/v2/addresses/0x584f1c676445707E3AF1A16b4B78186E445A8C93/nft?type=ERC-1155');
+        const res = await fetch(`https://base-sepolia.blockscout.com/api/v2/addresses/${libraryPoolAddress}/nft?type=ERC-1155`);
         const data = await res.json();
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
