@@ -5,7 +5,6 @@ import Providers from "./providers/PrivyProvider.tsx";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AuthScreen from "./pages/AuthScreen.tsx";
 import HomeScreen from "./pages/HomeScreen.tsx";
-import CreateBookV2Screen from "./pages/CreateBookV2Screen.tsx";
 import BookDetailScreen from "./pages/BookDetailScreen.tsx";
 
 import { Buffer } from 'buffer';

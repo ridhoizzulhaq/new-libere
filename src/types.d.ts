@@ -10,6 +10,7 @@ interface Book {
   royalty: number;
   addressReciepent: string;
   addressRoyaltyRecipient: string;
+  quantity?: number; // Optional - only present in bookshelf
 }
 
 interface AuthCredentials {

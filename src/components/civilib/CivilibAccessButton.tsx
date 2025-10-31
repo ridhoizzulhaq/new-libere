@@ -17,15 +17,6 @@ interface Props {
   onBorrowStatusChange?: (expiry: number | null) => void;
 }
 
-interface BorrowRecord {
-  recordId: number;
-  tokenId: number;
-  owner: string;
-  user: string;
-  amount: number;
-  expiry: number; // Unix timestamp
-}
-
 const CivilibAccessButton = ({
   client,
   clientPublic,
@@ -35,7 +26,6 @@ const CivilibAccessButton = ({
   onBorrowStatusChange,
 }: Props) => {
   const [hasBorrowed, setHasBorrowed] = useState(false);
-  const [borrowRecord, setBorrowRecord] = useState<BorrowRecord | null>(null);
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const navigate = useNavigate();
@@ -62,14 +52,6 @@ const CivilibAccessButton = ({
         if (borrowForThisBook) {
           setHasBorrowed(true);
           const expiryTimestamp = Number(borrowForThisBook.expiry);
-          setBorrowRecord({
-            recordId: Number(borrowForThisBook.recordId),
-            tokenId: Number(borrowForThisBook.tokenId),
-            owner: libraryPoolAddress,
-            user: smartWalletAddress,
-            amount: 1,
-            expiry: expiryTimestamp,
-          });
 
           // Notify parent component about expiry
           if (onBorrowStatusChange) {
@@ -77,7 +59,6 @@ const CivilibAccessButton = ({
           }
         } else {
           setHasBorrowed(false);
-          setBorrowRecord(null);
           if (onBorrowStatusChange) {
             onBorrowStatusChange(null);
           }
@@ -85,7 +66,6 @@ const CivilibAccessButton = ({
       } catch (error) {
         console.error("Error checking borrow status:", error);
         setHasBorrowed(false);
-        setBorrowRecord(null);
       }
     };
 
@@ -137,14 +117,6 @@ const CivilibAccessButton = ({
           if (borrowForThisBook) {
             setHasBorrowed(true);
             const expiryTimestamp = Number(borrowForThisBook.expiry);
-            setBorrowRecord({
-              recordId: Number(borrowForThisBook.recordId),
-              tokenId: Number(borrowForThisBook.tokenId),
-              owner: libraryPoolAddress,
-              user: smartWalletAddress,
-              amount: 1,
-              expiry: expiryTimestamp,
-            });
 
             if (onBorrowStatusChange) {
               onBorrowStatusChange(expiryTimestamp);
@@ -188,7 +160,6 @@ const CivilibAccessButton = ({
       // Refresh borrow status after a short delay
       setTimeout(() => {
         setHasBorrowed(false);
-        setBorrowRecord(null);
         setStatusMessage("");
         setLoading(false);
 

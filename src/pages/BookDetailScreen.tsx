@@ -77,12 +77,6 @@ const BookDetailScreen = () => {
     return price % 1 === 0 ? price.toString() : price.toFixed(2);
   };
 
-  // Convert USDC smallest unit to USDC (6 decimals)
-  const usdcToDisplay = (usdcValue: string | number) => {
-    const usdcAmount = Number(usdcValue) / Math.pow(10, USDC_DECIMALS);
-    return Math.round(usdcAmount * 100) / 100;
-  };
-
   const onMintBook = async () => {
     setLoading(true);
     setPurchaseStatus("");

@@ -2,9 +2,7 @@ import HomeLayout from "../components/layouts/HomeLayout";
 import BookList from "../components/BookList";
 import { useEffect, useState } from "react";
 import config from "../libs/config";
-import { NavLink, useNavigate } from "react-router-dom";
-import { usePrivy } from "@privy-io/react-auth";
-import { PiHandDepositBold } from "react-icons/pi";
+import { NavLink } from "react-router-dom";
 import { GiBookshelf } from "react-icons/gi";
 import { LuBookOpenCheck } from "react-icons/lu";
 
@@ -13,7 +11,6 @@ const baseUrl = config.env.supabase.baseUrl;
 const HomeScreen = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const navigate = useNavigate();
 
   // Removed auth redirect - allow guests to browse store
 

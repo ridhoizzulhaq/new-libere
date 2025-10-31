@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import BookEpubReaderButton from "../BookEpubReaderButton";
 import BookselfTxButton from "./BookselfTxButton";
-import { USDC_DECIMALS } from "../../usdc-token";
 
 interface Props {
   book: Book;
@@ -17,13 +16,8 @@ const BookselfBookCard = ({ book, client }: Props) => {
   console.log("📚 [Card] Rendering for book ID:", book.id, "Type:", typeof book.id);
   console.log("📸 [Card] Image URL:", book.metadataUri);
 
-  // Convert USDC units to readable USDC
-  const priceInUSDC = Number(book.priceEth) / Math.pow(10, USDC_DECIMALS);
-
-  // Format price: show whole numbers without decimals
-  const formattedPrice = priceInUSDC % 1 === 0
-    ? priceInUSDC.toString()
-    : priceInUSDC.toFixed(2);
+  // Convert USDC units to readable USDC (unused in bookshelf display)
+  // const priceInUSDC = Number(book.priceEth) / Math.pow(10, USDC_DECIMALS);
 
   // Load real reading progress from localStorage
   useEffect(() => {
@@ -126,7 +120,7 @@ const BookselfBookCard = ({ book, client }: Props) => {
               src={book.metadataUri}
               alt={book.title}
               className="w-full h-full object-cover rounded"
-              onError={(e) => {
+              onError={() => {
                 console.error("❌ [Card] Image load failed for book ID:", book.id, "URL:", book.metadataUri);
                 setImageError(true);
               }}
