@@ -1,0 +1,17 @@
+<svg width="1280" height="280" viewBox="0 0 1280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Left black book page -->
+  <path d="M30 40 C30 40 30 240 30 240 C30 240 110 240 125 225 C140 210 140 70 140 55 C140 40 110 40 110 40 Z" fill="#1F2937"/>
+
+  <!-- Right golden leaves (3 curved leaves) -->
+  <!-- Top leaf -->
+  <path d="M160 40 C160 40 235 37 255 65 C275 93 268 120 240 127 C212 134 160 120 160 90 C160 60 160 40 160 40 Z" fill="#D4A539"/>
+
+  <!-- Middle leaf -->
+  <path d="M160 105 C160 105 215 108 230 130 C245 152 238 170 215 177 C192 184 160 170 160 147 C160 124 160 105 160 105 Z" fill="#D4A539"/>
+
+  <!-- Bottom leaf -->
+  <path d="M160 175 C160 175 200 178 212 195 C224 212 218 228 200 235 C182 242 160 230 160 210 C160 190 160 175 160 175 Z" fill="#D4A539"/>
+
+  <!-- LIBERE Text -->
+  <text x="320" y="200" font-family="Arial, sans-serif" font-size="160" font-weight="700" fill="#1F2937">LIBERE</text>
+</svg>
