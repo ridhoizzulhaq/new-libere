@@ -1,5 +1,5 @@
 ---
-noteId: "20570f30b60a11f0ad8f4f365506ecb8"
+noteId: "3cede580b7b611f08d56a990e7f97797"
 tags: []
 
 ---
@@ -104,8 +104,7 @@ main.tsx → PrivyProvider (auth) → CurrencyProvider → BrowserRouter → Rou
 - `/bookselfs` → BookselfScreen (user's owned + borrowed books)
 - `/read-book/:id` → EpubReaderScreen (read EPUB with watermark)
 
-**Temporarily Hidden:**
-- `/publish` → CreateBookV2Screen (publish new books - currently disabled due to onlyOwner contract restriction)
+**Note:** Book publishing is only available via the `admin-publish/` tool due to contract `onlyOwner` restriction.
 
 ### Core Directories
 

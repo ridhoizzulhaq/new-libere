@@ -6,9 +6,10 @@ import { baseSepolia } from "viem/chains";
 interface Props {
   books: Book[];
   isLoading: boolean;
+  libraryAddress?: string; // Optional: specific library pool address
 }
 
-const CivilibBookList = ({ books }: Props) => {
+const CivilibBookList = ({ books, libraryAddress }: Props) => {
   const { client } = useSmartWallets();
   const clientPublic = createPublicClient({
     chain: baseSepolia,
@@ -18,7 +19,7 @@ const CivilibBookList = ({ books }: Props) => {
   return (
     <section className="w-full flex justify-center items-center">
       <div className="w-full">
-        <h2 className="text-3xl font-bold">📕 Books</h2>
+        <h2 className="text-3xl font-bold"> Books</h2>
 
         <ul className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 xs:gap-10">
           {books.map((book) => (
@@ -27,6 +28,7 @@ const CivilibBookList = ({ books }: Props) => {
               book={book}
               client={client}
               clientPublic={clientPublic}
+              libraryAddress={libraryAddress}
             />
           ))}
         </ul>

@@ -9,6 +9,7 @@ import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
 import type { Book } from "../core/interfaces";
 import { USDC_DECIMALS } from "../usdc-token";
+import { uploadEpub } from "../utils/supabaseStorage";
 
 const initialFormData = {
   title: "",
@@ -55,7 +56,10 @@ const CreateBookV2Screen = () => {
 
   // Auth check removed - ProtectedRoute handles this
 
-  const uploadFileToIPFS = async (file: File) => {
+  /**
+   * Upload cover image to IPFS (Pinata) - Keep on IPFS for public access
+   */
+  const uploadCoverToIPFS = async (file: File) => {
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -68,7 +72,25 @@ const CreateBookV2Screen = () => {
 
       return `https://gateway.pinata.cloud/ipfs/${res.data.IpfsHash}`;
     } catch {
-      throw new Error("Failed to upload file to IPFS");
+      throw new Error("Failed to upload cover image to IPFS");
+    }
+  };
+
+  /**
+   * Upload EPUB to Supabase Storage - Private storage with authentication
+   */
+  const uploadEpubToSupabase = async (file: File, bookId: number): Promise<string> => {
+    try {
+      const url = await uploadEpub(bookId, file);
+
+      if (!url) {
+        throw new Error("Failed to upload EPUB to Supabase Storage");
+      }
+
+      return url;
+    } catch (error) {
+      console.error("EPUB upload error:", error);
+      throw new Error("Failed to upload EPUB file to secure storage");
     }
   };
 
@@ -128,16 +150,20 @@ const CreateBookV2Screen = () => {
     try {
       setLoading(true);
 
-      // Upload cover image to IPFS
-      setLoadingMessage("Uploading cover image to IPFS...");
-      const metadataUri = await uploadFileToIPFS(formData.image!);
+      // Generate book ID first (needed for EPUB upload path)
+      const id = dayjs().unix();
 
-      // Upload EPUB to IPFS
-      setLoadingMessage("Uploading EPUB file to IPFS...");
-      const epubData = await uploadFileToIPFS(formData.epub!);
+      // Upload cover image to IPFS (public, decentralized)
+      setLoadingMessage("Uploading cover image to IPFS...");
+      const metadataUri = await uploadCoverToIPFS(formData.image!);
+      console.log("✅ Cover uploaded to IPFS:", metadataUri);
+
+      // Upload EPUB to Supabase Storage (private, authenticated)
+      setLoadingMessage("Uploading EPUB file to secure storage...");
+      const epubData = await uploadEpubToSupabase(formData.epub!, id);
+      console.log("✅ EPUB uploaded to Supabase:", epubData);
 
       // Prepare transaction data
-      const id = dayjs().unix();
       // Convert USDC price to smallest unit (6 decimals)
       // Example: 10 USDC = 10 * 10^6 = 10000000
       const priceInUSDC = Math.floor(Number(formData.price) * Math.pow(10, USDC_DECIMALS));

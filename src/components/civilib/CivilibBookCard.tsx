@@ -8,9 +8,10 @@ interface Props {
   book: Book;
   client: any;
   clientPublic: any;
+  libraryAddress?: string; // Optional: specific library pool address
 }
 
-const CivilibBookCard = ({ book, client, clientPublic }: Props) => {
+const CivilibBookCard = ({ book, client, clientPublic, libraryAddress }: Props) => {
   const [totalStock, setTotalStock] = useState(0);
   const [frozenNow, setFrozenNow] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,9 @@ const CivilibBookCard = ({ book, client, clientPublic }: Props) => {
   };
 
 
+  // Use provided libraryAddress or default to libraryPoolAddress
+  const effectiveLibraryAddress = libraryAddress || libraryPoolAddress;
+
   useEffect(() => {
     const fetchBookAvailability = async () => {
       try {
@@ -51,7 +55,7 @@ const CivilibBookCard = ({ book, client, clientPublic }: Props) => {
           address: contractAddress,
           abi: contractABI,
           functionName: "balanceOf",
-          args: [libraryPoolAddress, BigInt(book.id)],
+          args: [effectiveLibraryAddress, BigInt(book.id)],
         });
 
         setTotalStock(Number(totalStockBalance));
@@ -152,6 +156,7 @@ const CivilibBookCard = ({ book, client, clientPublic }: Props) => {
               bookId={book.id}
               smartWalletAddress={client?.account.address}
               onBorrowStatusChange={(expiry) => setUserBorrowExpiry(expiry)}
+              libraryAddress={effectiveLibraryAddress}
             />
           </div>
         </div>

@@ -15,6 +15,7 @@ interface Props {
   bookId: number;
   smartWalletAddress: string;
   onBorrowStatusChange?: (expiry: number | null) => void;
+  libraryAddress?: string; // Optional: specific library pool address
 }
 
 const CivilibAccessButton = ({
@@ -24,7 +25,10 @@ const CivilibAccessButton = ({
   bookId,
   smartWalletAddress,
   onBorrowStatusChange,
+  libraryAddress,
 }: Props) => {
+  // Use provided libraryAddress or default to libraryPoolAddress
+  const effectiveLibraryAddress = libraryAddress || libraryPoolAddress;
   const [hasBorrowed, setHasBorrowed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
@@ -38,7 +42,7 @@ const CivilibAccessButton = ({
       try {
         // Get all active borrows for this user
         const activeBorrows: any = await clientPublic.readContract({
-          address: libraryPoolAddress,
+          address: effectiveLibraryAddress,
           abi: libraryPoolABI,
           functionName: "getActiveBorrows",
           args: [smartWalletAddress],
@@ -85,7 +89,7 @@ const CivilibAccessButton = ({
     try {
       const tx = await client.sendTransaction({
         chain: baseSepolia,
-        to: libraryPoolAddress,
+        to: effectiveLibraryAddress,
         data: encodeFunctionData({
           abi: libraryPoolABI,
           functionName: "borrowFromPool",
@@ -104,7 +108,7 @@ const CivilibAccessButton = ({
         // Fetch updated borrow status with expiry
         try {
           const activeBorrows: any = await clientPublic.readContract({
-            address: libraryPoolAddress,
+            address: effectiveLibraryAddress,
             abi: libraryPoolABI,
             functionName: "getActiveBorrows",
             args: [smartWalletAddress],
@@ -146,7 +150,7 @@ const CivilibAccessButton = ({
     try {
       const tx = await client.sendTransaction({
         chain: baseSepolia,
-        to: libraryPoolAddress,
+        to: effectiveLibraryAddress,
         data: encodeFunctionData({
           abi: libraryPoolABI,
           functionName: "returnMyBorrow",

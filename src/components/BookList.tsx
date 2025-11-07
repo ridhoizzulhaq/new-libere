@@ -10,7 +10,7 @@ const BookList = ({ books, isLoading }: Props) => {
     <section className="w-full flex justify-center items-center">
       <div className="w-full">
         <h2 className="text-2xl font-bold text-zinc-900">
-          📕 Book Lists
+          Book Lists
         </h2>
 
         <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

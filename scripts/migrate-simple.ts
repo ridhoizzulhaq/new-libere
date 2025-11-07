@@ -1,0 +1,218 @@
+/**
+ * Simple Migration Script: IPFS to Supabase Storage
+ *
+ * Lighter version for quick testing and migration
+ *
+ * Usage:
+ *   tsx scripts/migrate-simple.ts
+ *
+ * Or with specific book IDs:
+ *   tsx scripts/migrate-simple.ts 1 2 3
+ */
+
+import { createClient } from '@supabase/supabase-js';
+import axios from 'axios';
+
+// Configuration from environment
+const supabaseUrl = process.env.VITE_SUPABASE_URL!;
+const supabaseKey = process.env.VITE_SUPABASE_API_KEY!;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Missing environment variables!');
+  console.error('   Please set VITE_SUPABASE_URL and VITE_SUPABASE_API_KEY');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+const EPUB_BUCKET = 'libere-books';
+
+// Helper functions
+const isIpfsUrl = (url: string) => url.includes('ipfs') || url.includes('pinata.cloud');
+const isSupabaseUrl = (url: string) => url.includes('.supabase.co/storage/');
+
+async function migrateBook(bookId: number) {
+  console.log(`\n📖 Migrating Book ID: ${bookId}`);
+
+  try {
+    // 1. Fetch book from database
+    const { data: book, error: fetchError } = await supabase
+      .from('Book')
+      .select('*')
+      .eq('id', bookId)
+      .single();
+
+    if (fetchError || !book) {
+      throw new Error(`Book not found: ${fetchError?.message}`);
+    }
+
+    console.log(`   Title: ${book.title}`);
+    console.log(`   Current EPUB URL: ${book.epub.substring(0, 60)}...`);
+
+    // 2. Check if already migrated
+    if (isSupabaseUrl(book.epub)) {
+      console.log(`   ✅ Already migrated to Supabase Storage`);
+      return true;
+    }
+
+    // 3. Check if from IPFS
+    if (!isIpfsUrl(book.epub)) {
+      console.log(`   ⚠️  URL is not from IPFS, skipping...`);
+      return false;
+    }
+
+    // 4. Download EPUB from IPFS
+    console.log(`   📥 Downloading from IPFS...`);
+    const response = await axios.get(book.epub, {
+      responseType: 'arraybuffer',
+      timeout: 60000,
+    });
+
+    const epubBuffer = Buffer.from(response.data);
+    const sizeMB = (epubBuffer.length / 1024 / 1024).toFixed(2);
+    console.log(`   ✅ Downloaded ${sizeMB} MB`);
+
+    // 5. Upload to Supabase Storage
+    console.log(`   📤 Uploading to Supabase Storage...`);
+    const filePath = `${bookId}/book.epub`;
+
+    // Remove old file if exists
+    await supabase.storage
+      .from(EPUB_BUCKET)
+      .remove([filePath]);
+
+    // Upload new file
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(EPUB_BUCKET)
+      .upload(filePath, epubBuffer, {
+        contentType: 'application/epub+zip',
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw new Error(`Upload failed: ${uploadError.message}`);
+    }
+
+    // 6. Get new URL
+    const { data: urlData } = supabase.storage
+      .from(EPUB_BUCKET)
+      .getPublicUrl(filePath);
+
+    console.log(`   ✅ Uploaded to Supabase`);
+    console.log(`   New URL: ${urlData.publicUrl.substring(0, 60)}...`);
+
+    // 7. Update database
+    console.log(`   💾 Updating database...`);
+    const { error: updateError } = await supabase
+      .from('Book')
+      .update({ epub: urlData.publicUrl })
+      .eq('id', bookId);
+
+    if (updateError) {
+      throw new Error(`Database update failed: ${updateError.message}`);
+    }
+
+    console.log(`   ✅ Database updated`);
+    console.log(`   🎉 Migration completed for Book ${bookId}!`);
+
+    return true;
+
+  } catch (error: any) {
+    console.error(`   ❌ Migration failed: ${error.message}`);
+    return false;
+  }
+}
+
+async function migrateAllBooks() {
+  console.log('🚀 Migrating ALL books from IPFS to Supabase Storage\n');
+
+  try {
+    // Fetch all books
+    const { data: books, error } = await supabase
+      .from('Book')
+      .select('id, title, epub')
+      .order('id', { ascending: true });
+
+    if (error || !books) {
+      throw new Error(`Failed to fetch books: ${error?.message}`);
+    }
+
+    console.log(`📚 Found ${books.length} books in database`);
+
+    // Filter IPFS books
+    const ipfsBooks = books.filter(book => isIpfsUrl(book.epub));
+    const alreadyMigrated = books.filter(book => isSupabaseUrl(book.epub));
+
+    console.log(`   - IPFS (needs migration): ${ipfsBooks.length}`);
+    console.log(`   - Already migrated: ${alreadyMigrated.length}`);
+
+    if (ipfsBooks.length === 0) {
+      console.log('\n✅ All books already migrated!');
+      return;
+    }
+
+    // Migrate each book
+    const results = {
+      success: 0,
+      failed: 0,
+      skipped: 0,
+    };
+
+    for (const book of ipfsBooks) {
+      const success = await migrateBook(book.id);
+
+      if (success) {
+        results.success++;
+      } else {
+        results.failed++;
+      }
+
+      // Wait 1 second between books to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    // Summary
+    console.log('\n' + '='.repeat(60));
+    console.log('📊 MIGRATION SUMMARY');
+    console.log('='.repeat(60));
+    console.log(`✅ Successful: ${results.success}`);
+    console.log(`❌ Failed: ${results.failed}`);
+    console.log(`⏭️  Skipped: ${results.skipped}`);
+    console.log('='.repeat(60) + '\n');
+
+  } catch (error: any) {
+    console.error('❌ Error:', error.message);
+    process.exit(1);
+  }
+}
+
+// Main execution
+async function main() {
+  const args = process.argv.slice(2);
+
+  if (args.length === 0) {
+    // No arguments = migrate all books
+    await migrateAllBooks();
+  } else {
+    // Specific book IDs provided
+    console.log(`🚀 Migrating ${args.length} specific book(s)\n`);
+
+    for (const arg of args) {
+      const bookId = parseInt(arg, 10);
+
+      if (isNaN(bookId)) {
+        console.log(`⚠️  Invalid book ID: ${arg}, skipping...`);
+        continue;
+      }
+
+      await migrateBook(bookId);
+
+      // Wait between books
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+
+  console.log('\n✅ Done!\n');
+}
+
+main();

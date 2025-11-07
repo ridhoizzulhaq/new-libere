@@ -48,3 +48,33 @@
   --color-gray-100: #CBD5E1;
 
 }
+
+/* Mobile EPUB Reader Optimizations */
+@media (max-width: 640px) {
+  /* Prevent text selection bounce on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+
+  /* Smooth scrolling for EPUB content */
+  body {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Make sure reader iframe is touch-friendly */
+  iframe {
+    touch-action: pan-y pinch-zoom;
+  }
+}
+
+/* Hide scrollbar but keep functionality */
+.epub-container::-webkit-scrollbar {
+  display: none;
+}
+
+.epub-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
