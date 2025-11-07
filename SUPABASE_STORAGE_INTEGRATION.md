@@ -132,7 +132,7 @@ libere-books/
 
 ### 1. Upload EPUB saat Publish Book
 
-Book publishing is handled by the `admin-publish/` tool due to contract `onlyOwner` restriction.
+File: [src/pages/CreateBookV2Screen.tsx](src/pages/CreateBookV2Screen.tsx)
 
 ```typescript
 import { uploadEpub } from "../utils/supabaseStorage";

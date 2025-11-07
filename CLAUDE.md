@@ -1,5 +1,5 @@
 ---
-noteId: "3cede580b7b611f08d56a990e7f97797"
+noteId: "96ee2210ba6411f098c215b9d310be9c"
 tags: []
 
 ---
@@ -20,8 +20,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Blockchain**: Base Sepolia testnet
 - **Smart Contracts**: ERC-1155 NFT marketplace + Library Pool (ERC-4337)
 - **Payment**: USDC (6 decimals) - address: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
-- **Storage**: Pinata (IPFS) for book files, Supabase for metadata
+- **Storage**: Pinata (IPFS) for book files, Supabase for metadata & EPUB storage
 - **Ethereum Libraries**: viem v2 + ethers v6 + permissionless
+- **PWA**: Progressive Web App with offline support via Vite PWA plugin
+- **EPUB Reader**: react-reader for displaying EPUB books with custom watermark overlay
 
 ## Smart Contracts
 
@@ -59,6 +61,11 @@ npm preview
 
 # Lint code
 npm run lint
+
+# Utility scripts
+npm run migrate:epubs      # Migrate EPUB files from IPFS to Supabase Storage
+npm run migrate:simple     # Simple migration utility
+npm run test:supabase      # Test Supabase connection
 ```
 
 ## Environment Setup
@@ -88,8 +95,12 @@ VITE_BASE_SEPOLIA_LIBRARY_BASE_URL=https://base-sepolia.blockscout.com/api/v2/ad
 ### Application Flow
 
 ```
-main.tsx → PrivyProvider (auth) → CurrencyProvider → BrowserRouter → Routes
+main.tsx (entry point) → PrivyProvider (auth) → CurrencyProvider → BrowserRouter → Routes
 ```
+
+**Notes**:
+- The root-level `App.tsx` is a leftover from the Vite template and is not used. The actual entry point is [src/main.tsx](src/main.tsx) which renders routes directly.
+- [main.tsx](src/main.tsx:18-34) includes error suppression for browser extension iframe errors that occur when extensions try to access the EPUB reader iframe - these errors are harmless and can be ignored.
 
 ### Route Structure
 
@@ -104,7 +115,8 @@ main.tsx → PrivyProvider (auth) → CurrencyProvider → BrowserRouter → Rou
 - `/bookselfs` → BookselfScreen (user's owned + borrowed books)
 - `/read-book/:id` → EpubReaderScreen (read EPUB with watermark)
 
-**Note:** Book publishing is only available via the `admin-publish/` tool due to contract `onlyOwner` restriction.
+**Temporarily Hidden:**
+- `/publish` → CreateBookV2Screen (publish new books - currently disabled due to onlyOwner contract restriction)
 
 ### Core Directories
 
@@ -368,6 +380,58 @@ npm run dev
 **Important**: Requires owner private key in `.env`. Only for local development - never deploy to production.
 
 See [admin-publish/README.md](admin-publish/README.md) for detailed instructions.
+
+## Progressive Web App (PWA)
+
+The app is configured as a PWA with offline support and can be installed on devices:
+
+### Features
+- **Service Worker**: Auto-updates on new content
+- **Offline Caching**: Images and API responses cached for offline access
+- **Installable**: Can be installed as standalone app on desktop/mobile
+- **Workbox Caching Strategies**:
+  - EPUB files: NetworkOnly (NEVER cached for security - prevents unauthorized offline access)
+  - Supabase signed URLs: NetworkOnly (expire quickly, should not be cached)
+  - Supabase API: NetworkFirst (5 min cache)
+  - IPFS/Pinata images: CacheFirst (24 hour cache)
+
+### PWA Configuration
+Located in [vite.config.ts](vite.config.ts) using `vite-plugin-pwa`. Service worker registers automatically in [main.tsx](src/main.tsx:16-30).
+
+**Security Note**: EPUB files are intentionally excluded from caching to prevent unauthorized offline access. Users can only read books while authenticated and with valid access rights.
+
+## Utility Scripts
+
+### EPUB Migration Script
+Migrates EPUB files from IPFS to Supabase Storage bucket:
+
+```bash
+npm run migrate:epubs
+```
+
+**What it does:**
+- Fetches all books from database
+- Downloads EPUBs from IPFS/Pinata
+- Uploads to Supabase Storage bucket `libere-books`
+- Updates database with new Supabase URLs
+- Generates migration report JSON
+
+**Features:**
+- Batch processing (5 books at a time)
+- Retry logic (3 attempts)
+- Skip already migrated books
+- Detailed console output and JSON report
+
+Located in [scripts/migrate-epubs-to-supabase.ts](scripts/migrate-epubs-to-supabase.ts).
+
+### Testing Scripts
+```bash
+# Test Supabase connection
+npm run test:supabase
+
+# Simple migration utility
+npm run migrate:simple
+```
 
 ## Known Issues & Workarounds
 

@@ -590,4 +590,4 @@ Example:
 - [ ] Monitor storage usage
 - [ ] Setup automated backups
 - [ ] Consider implementing offline caching
-- [ ] Update publish flow using admin-publish tool
+- [ ] Update publish flow (already done in CreateBookV2Screen)

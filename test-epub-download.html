@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test EPUB Download</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        .log {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #00ff00;
+            background: #2a2a2a;
+        }
+        .error {
+            border-left-color: #ff0000;
+            color: #ff6666;
+        }
+        .success {
+            border-left-color: #00ff00;
+            color: #66ff66;
+        }
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-family: monospace;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #00cc00;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test EPUB Download from Supabase</h1>
+    <p>Masukkan Book ID yang ingin ditest:</p>
+    <input type="number" id="bookId" value="1" style="padding: 5px; font-family: monospace;">
+    <button onclick="testDownload()">Test Download</button>
+    <button onclick="testList()">List Files</button>
+    <button onclick="clearLogs()">Clear Logs</button>
+    <div id="logs"></div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+        const SUPABASE_URL = 'https://mbgbxpmgjrtmjibygpdc.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iZ2J4cG1nanJ0bWppYnlncGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3NDM3NDUsImV4cCI6MjA3NzMxOTc0NX0.4kg9bCbITiyI_XWHOh_NFaRQn3wljj4rYTpgABjS79U'
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+        function log(message, type = 'log') {
+            const div = document.createElement('div')
+            div.className = `log ${type}`
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`
+            document.getElementById('logs').appendChild(div)
+            console.log(message)
+        }
+
+        window.testDownload = async function() {
+            const bookId = document.getElementById('bookId').value
+            log(`📚 Testing download for book ID: ${bookId}`)
+
+            try {
+                const filePath = `${bookId}/book.epub`
+                log(`📂 Downloading from path: ${filePath}`)
+
+                const { data, error } = await supabase.storage
+                    .from('libere-books')
+                    .download(filePath)
+
+                if (error) {
+                    log(`❌ ERROR: ${error.message}`, 'error')
+                    log(`   Status: ${error.statusCode || 'unknown'}`, 'error')
+                    log(`   Full error: ${JSON.stringify(error)}`, 'error')
+                    return
+                }
+
+                if (!data) {
+                    log(`❌ No data returned`, 'error')
+                    return
+                }
+
+                log(`✅ Download successful!`, 'success')
+                log(`   Size: ${(data.size / 1024 / 1024).toFixed(2)} MB`, 'success')
+                log(`   Type: ${data.type}`, 'success')
+
+                // Create blob URL and test
+                const blobUrl = URL.createObjectURL(data)
+                log(`✅ Blob URL created: ${blobUrl}`, 'success')
+
+                // Try to open in new tab
+                window.open(blobUrl, '_blank')
+                log(`📖 Opened in new tab`, 'success')
+
+            } catch (err) {
+                log(`❌ EXCEPTION: ${err.message}`, 'error')
+                log(`   Stack: ${err.stack}`, 'error')
+            }
+        }
+
+        window.testList = async function() {
+            const bookId = document.getElementById('bookId').value
+            log(`📂 Listing files in folder: ${bookId}`)
+
+            try {
+                const { data, error } = await supabase.storage
+                    .from('libere-books')
+                    .list(bookId)
+
+                if (error) {
+                    log(`❌ ERROR: ${error.message}`, 'error')
+                    return
+                }
+
+                if (!data || data.length === 0) {
+                    log(`⚠️ No files found in folder ${bookId}`, 'error')
+                    return
+                }
+
+                log(`✅ Found ${data.length} file(s):`, 'success')
+                data.forEach(file => {
+                    log(`   📄 ${file.name} - ${(file.metadata?.size / 1024 / 1024).toFixed(2)} MB`, 'success')
+                })
+
+            } catch (err) {
+                log(`❌ EXCEPTION: ${err.message}`, 'error')
+            }
+        }
+
+        window.clearLogs = function() {
+            document.getElementById('logs').innerHTML = ''
+        }
+
+        log('🚀 Supabase client initialized')
+        log('📝 URL: ' + SUPABASE_URL)
+        log('🔑 Key: ' + SUPABASE_KEY.substring(0, 20) + '...')
+    </script>
+</body>
+</html>

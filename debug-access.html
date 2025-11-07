@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Debug Library Access</title>
+  <script type="module">
+    // Paste this in browser console while on llibere app
+
+    // Get user info from Privy
+    console.log('=== USER INFO ===');
+    console.log('Wallet address from Privy:', window.localStorage.getItem('privy:wallet_address'));
+
+    // Check what address is being used
+    const checkAddress = async () => {
+      // This assumes you have viem and the contract addresses
+      const libraryPoolAddress = '0xA31D6d3f2a6C5fBA99E451CCAAaAdf0bca12cbF0';
+      const bookId = 1761747515;
+
+      // Try to get current user from Privy context
+      console.log('\n=== TESTING DIFFERENT ADDRESSES ===');
+
+      // Address 1: From screenshot
+      const addr1 = '0x6BEc334AfeA71D59077ed138910FD299bdC51E1A';
+      console.log('\n1. Testing address from screenshot:', addr1);
+      console.log('   Query: usableBalanceOf(', addr1, ',', bookId, ')');
+      console.log('   Contract:', libraryPoolAddress);
+      console.log('   Expected: 1 (based on your Blockscout test)');
+
+      // Address 2: Actual smart wallet
+      console.log('\n2. Check if using different address in app');
+      console.log('   Look for "User wallet:" in console logs above');
+    };
+
+    checkAddress();
+  </script>
+</head>
+<body>
+  <h1>Debug Script - Check Console</h1>
+  <p>Paste the following in your browser console while on the llibere app:</p>
+  <pre>
+// Check current user address
+console.log('Current user wallet:', user?.wallet?.address);
+
+// Check all active borrows
+const { createPublicClient, http } = await import('https://esm.sh/viem');
+const { baseSepolia } = await import('https://esm.sh/viem/chains');
+
+const publicClient = createPublicClient({
+  chain: baseSepolia,
+  transport: http()
+});
+
+const libraryPoolABI = [{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getActiveBorrows","outputs":[{"components":[{"internalType":"uint256","name":"recordId","type":"uint256"},{"internalType":"uint256","name":"tokenId","type":"uint256"},{"internalType":"uint64","name":"expiry","type":"uint64"}],"internalType":"struct LibraryPool.BorrowView[]","name":"borrows","type":"tuple[]"}],"stateMutability":"view","type":"function"}];
+
+const libraryPoolAddress = '0xA31D6d3f2a6C5fBA99E451CCAAaAdf0bca12cbF0';
+const userAddress = '0x6BEc334AfeA71D59077ed138910FD299bdC51E1A'; // YOUR ADDRESS HERE
+
+const borrows = await publicClient.readContract({
+  address: libraryPoolAddress,
+  abi: libraryPoolABI,
+  functionName: 'getActiveBorrows',
+  args: [userAddress]
+});
+
+console.log('Active borrows:', borrows);
+borrows.forEach((borrow, i) => {
+  console.log(`Borrow ${i+1}:`, {
+    recordId: borrow.recordId.toString(),
+    tokenId: borrow.tokenId.toString(),
+    expiry: new Date(Number(borrow.expiry) * 1000).toLocaleString(),
+    isExpired: Number(borrow.expiry) < Math.floor(Date.now() / 1000)
+  });
+});
+  </pre>
+</body>
+</html>

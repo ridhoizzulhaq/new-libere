@@ -1,290 +1,312 @@
----
-noteId: "9c9c1380b7c511f08d56a990e7f97797"
-tags: []
+# Supabase Storage Setup - Quick Start Guide
 
----
+Integrasi Supabase Storage untuk EPUB files sudah berhasil ditambahkan ke project **llibere-main**!
 
-# Supabase Storage Setup Guide
+## ✅ Yang Sudah Terintegrasi
 
-This guide walks you through setting up Supabase Storage for private EPUB file hosting in the Libere application.
+### 1. Utility Functions
+- **File**: [src/utils/supabaseStorage.ts](src/utils/supabaseStorage.ts)
+- **Fungsi**:
+  - `uploadEpub()` - Upload EPUB ke bucket
+  - `getSignedEpubUrl()` - Generate signed URL (1 jam expiry)
+  - `downloadEpubBlob()` - Download EPUB sebagai Blob
+  - `epubExists()` - Check apakah EPUB ada
+  - `deleteEpub()` - Hapus EPUB dari bucket
+  - `isSupabaseStorageUrl()` - Detect URL dari Supabase
+  - `isIpfsUrl()` - Detect URL dari IPFS
 
-## Prerequisites
+### 2. CreateBookV2Screen - Updated
+- **File**: [src/pages/CreateBookV2Screen.tsx](src/pages/CreateBookV2Screen.tsx)
+- **Perubahan**:
+  - Import `uploadEpub` dari utils
+  - Cover image → tetap ke IPFS (public)
+  - EPUB file → upload ke Supabase Storage (private)
+  - Loading message: "Uploading EPUB file to secure storage..."
 
-- Access to Supabase dashboard: https://app.supabase.com
-- Your Libere project already connected to Supabase
-- Admin access to execute SQL policies
+### 3. EpubReaderScreen - Updated
+- **File**: [src/pages/EpubReaderScreen.tsx](src/pages/EpubReaderScreen.tsx)
+- **Perubahan**:
+  - Fetch book data dari database
+  - Auto-detect URL type (Supabase vs IPFS)
+  - Generate signed URL untuk Supabase Storage
+  - Fallback ke IPFS untuk book lama
+  - Loading dan error states
 
----
+### 4. Migration Scripts
+- **Directory**: [scripts/](scripts/)
+- **Files**:
+  - `migrate-simple.ts` - Simple migration script
+  - `migrate-epubs-to-supabase.ts` - Advanced migration
+  - `test-supabase-connection.ts` - Test setup
+  - `README.md` - Scripts documentation
 
-## Step 1: Create Storage Bucket
+### 5. Documentation
+- [SUPABASE_STORAGE_INTEGRATION.md](SUPABASE_STORAGE_INTEGRATION.md) - Full integration guide
+- [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Migration step-by-step
+- [scripts/README.md](scripts/README.md) - Scripts usage
 
-### Via Supabase Dashboard:
-
-1. Navigate to **Storage** in the left sidebar
-2. Click **"Create a new bucket"**
-3. Configure the bucket:
-   - **Name:** `libere-books`
-   - **Public:** ❌ **Disable** (private bucket)
-   - **File size limit:** `52428800` (50 MB)
-   - **Allowed MIME types:** `application/epub+zip`
-4. Click **"Create bucket"**
-
-### Via SQL (Alternative):
-
-```sql
--- Create the storage bucket
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'libere-books',
-  'libere-books',
-  false, -- Private bucket
-  52428800, -- 50 MB limit
-  ARRAY['application/epub+zip']
-);
+### 6. Package.json - Updated
+```json
+{
+  "scripts": {
+    "migrate:epubs": "tsx scripts/migrate-epubs-to-supabase.ts",
+    "migrate:simple": "tsx scripts/migrate-simple.ts",
+    "test:supabase": "tsx scripts/test-supabase-connection.ts"
+  }
+}
 ```
 
----
+## 🚀 Langkah Selanjutnya
 
-## Step 2: Configure Row Level Security (RLS) Policies
+### Step 1: Setup Supabase Bucket
 
-### Policy 1: Authenticated Read Access
+1. **Buka Supabase Dashboard**: https://supabase.com/dashboard
+2. **Pilih project** Anda
+3. **Klik Storage** di sidebar
+4. **Klik "New bucket"**
+5. **Isi form**:
+   - Name: `libere-books`
+   - **UNCHECK "Public"** (harus private!)
+   - Click "Create bucket"
 
-Allow authenticated users to read EPUB files (required for generating signed URLs).
+### Step 2: Setup Storage Policies
 
+Di Supabase Dashboard → Storage → libere-books → Policies:
+
+**Policy 1: Allow Upload**
 ```sql
--- Allow authenticated users to read EPUBs
-CREATE POLICY "Authenticated users can read EPUBs"
+CREATE POLICY "Allow authenticated upload"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'libere-books');
+```
+
+**Policy 2: Allow Read**
+```sql
+CREATE POLICY "Allow authenticated read"
 ON storage.objects FOR SELECT
 TO authenticated
 USING (bucket_id = 'libere-books');
 ```
 
-### Policy 2: Authenticated Upload Access
+### Step 3: Verify Environment Variables
 
-Allow authenticated users to upload EPUBs (for admin-publish tool).
-
-```sql
--- Allow authenticated users to upload EPUBs
-CREATE POLICY "Authenticated users can upload EPUBs"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (
-  bucket_id = 'libere-books'
-  AND (storage.foldername(name))[1] ~ '^[0-9]+$' -- Folder name must be numeric (bookId)
-);
-```
-
-### Policy 3: Authenticated Update Access (Optional)
-
-Allow updating existing EPUBs (for re-uploads or corrections).
-
-```sql
--- Allow authenticated users to update EPUBs
-CREATE POLICY "Authenticated users can update EPUBs"
-ON storage.objects FOR UPDATE
-TO authenticated
-USING (bucket_id = 'libere-books')
-WITH CHECK (bucket_id = 'libere-books');
-```
-
-### Policy 4: Authenticated Delete Access (Optional)
-
-Allow deleting EPUBs (for admin cleanup).
-
-```sql
--- Allow authenticated users to delete EPUBs
-CREATE POLICY "Authenticated users can delete EPUBs"
-ON storage.objects FOR DELETE
-TO authenticated
-USING (bucket_id = 'libere-books');
-```
-
----
-
-## Step 3: Verify Setup
-
-### Test Upload (via Supabase Dashboard):
-
-1. Go to **Storage** → `libere-books` bucket
-2. Click **"Upload file"**
-3. Create a test folder: `999/`
-4. Upload a test EPUB file: `999/test.epub`
-5. Verify upload succeeds
-
-### Test Signed URL (via App Console):
-
-**Easiest method** - Open the Libere app in browser:
-
-1. Start the app: `npm run dev`
-2. Open browser DevTools (F12)
-3. Go to Console tab
-4. Run this code:
-
-```javascript
-// Import the utility function
-import { getSignedEpubUrl } from './src/utils/supabaseStorage';
-
-// Test with book ID 999 (or any book ID you uploaded)
-const url = await getSignedEpubUrl(999);
-console.log('Signed URL:', url);
-
-// Try to fetch it
-if (url) {
-  const response = await fetch(url);
-  console.log('Status:', response.status, response.statusText);
-  console.log('Can access:', response.ok);
-}
-```
-
-**Alternative: Direct Supabase client:**
-
-```javascript
-// Access the supabase client from libs
-import { supabase } from './src/libs/supabase';
-
-const { data, error } = await supabase.storage
-  .from('libere-books')
-  .createSignedUrl('999/test.epub', 3600); // 1 hour expiry
-
-console.log('Signed URL:', data?.signedUrl);
-console.log('Error:', error);
-```
-
-You should receive a signed URL like:
-```
-https://[project].supabase.co/storage/v1/object/sign/libere-books/999/test.epub?token=...
-```
-
-**Alternative: Test via curl:**
+Check file `.env`:
 
 ```bash
-curl "https://[project].supabase.co/storage/v1/object/sign/libere-books/999/test.epub" \
-  -X POST \
-  -H "apikey: YOUR_SUPABASE_ANON_KEY" \
-  -H "Authorization: Bearer YOUR_SUPABASE_ANON_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"expiresIn": 3600}'
-```
-
-### Test Public Access (Should Fail):
-
-Try accessing the file without authentication:
-```
-https://[project].supabase.co/storage/v1/object/public/libere-books/999/test.epub
-```
-
-This should return **401 Unauthorized** or **403 Forbidden** (confirming private bucket).
-
----
-
-## Step 4: Update Application Configuration
-
-No environment variables need to be changed. The existing Supabase config will work:
-
-```env
-# .env (no changes needed)
+# Harus sudah ada
 VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_API_KEY=your_anon_public_key
+VITE_SUPABASE_API_KEY=your_supabase_anon_key
 ```
+
+### Step 4: Test Setup
+
+```bash
+# Test koneksi dan bucket
+npm run test:supabase
+```
+
+Output yang diharapkan:
+```
+✅ Environment variables found
+✅ Supabase client initialized
+✅ Database connection successful
+✅ Bucket "libere-books" exists!
+✅ File upload successful!
+✅ File download successful!
+✅ Signed URL generated successfully!
+✅ ALL TESTS PASSED!
+```
+
+### Step 5: Migrasi EPUB dari IPFS
+
+```bash
+# Migrate all books
+npm run migrate:simple
+```
+
+Output:
+```
+📚 Found 10 books
+   - IPFS (needs migration): 8
+   - Already migrated: 2
+
+📖 Migrating Book ID: 1
+   ✅ Downloaded 2.34 MB
+   ✅ Uploaded to Supabase
+   ✅ Database updated
+   🎉 Migration completed!
+
+✅ Successful: 8
+❌ Failed: 0
+```
+
+### Step 6: Verify di Web App
+
+```bash
+npm run dev
+```
+
+1. Login ke app
+2. Buka bookshelf
+3. Read any book
+4. Check browser console:
+   ```
+   🔐 [LoadBook] Generating signed URL for Supabase Storage...
+   ✅ [LoadBook] Signed URL generated (expires in 1 hour)
+   📖 [Reader] EPUB URL ready
+   ```
+
+## 📋 Checklist Setup
+
+- [ ] Bucket `libere-books` dibuat di Supabase
+- [ ] Bucket setting: **Private** (not public)
+- [ ] Storage policies sudah disetup (upload & read)
+- [ ] Environment variables sudah benar di `.env`
+- [ ] Test passed: `npm run test:supabase`
+- [ ] Migration completed: `npm run migrate:simple`
+- [ ] Web app bisa read books dari Supabase Storage
+
+## 🔧 Troubleshooting
+
+### Error: "Bucket not found"
+
+**Solusi**: Buat bucket di Supabase Dashboard dengan nama `libere-books`
+
+### Error: "Failed to upload"
+
+**Penyebab**: Storage policies belum disetup
+
+**Solusi**: Run SQL policies di Supabase SQL Editor (lihat Step 2)
+
+### Error: "Failed to generate signed URL"
+
+**Penyebab**:
+- File belum di-upload
+- Permissions tidak benar
+
+**Solusi**:
+1. Check file ada di bucket
+2. Verify storage policies
+
+### Books tidak bisa dibuka
+
+**Solusi**:
+1. Check browser console untuk error
+2. Verify signed URL generated
+3. Re-migrate book jika perlu:
+   ```bash
+   tsx scripts/migrate-simple.ts 1
+   ```
+
+## 📚 File Structure
+
+```
+llibere-main/
+├── src/
+│   ├── utils/
+│   │   └── supabaseStorage.ts          # Utility functions ✅
+│   └── pages/
+│       ├── CreateBookV2Screen.tsx       # Updated ✅
+│       └── EpubReaderScreen.tsx         # Updated ✅
+├── scripts/
+│   ├── migrate-simple.ts                # Migration script ✅
+│   ├── migrate-epubs-to-supabase.ts    # Advanced migration ✅
+│   ├── test-supabase-connection.ts      # Test script ✅
+│   └── README.md                        # Scripts docs ✅
+├── SUPABASE_STORAGE_INTEGRATION.md      # Full guide ✅
+├── MIGRATION_GUIDE.md                   # Migration guide ✅
+└── package.json                         # Updated scripts ✅
+```
+
+## 🎯 Arsitektur Storage
+
+```
+┌─────────────────────────────────────────────┐
+│         USER PUBLISHES BOOK                  │
+└─────────────────┬───────────────────────────┘
+                  │
+        ┌─────────▼──────────┐
+        │  CreateBookV2Screen │
+        └─────────┬───────────┘
+                  │
+        ┌─────────▼──────────┐
+        │   Cover Image       │──────► IPFS (Public)
+        │   +                 │        gateway.pinata.cloud
+        │   EPUB File        │
+        └─────────┬───────────┘
+                  │
+        ┌─────────▼──────────┐
+        │  uploadEpub()       │──────► Supabase Storage
+        └─────────┬───────────┘        (Private)
+                  │                     libere-books/
+                  │                     └── {bookId}/book.epub
+        ┌─────────▼──────────┐
+        │   Save to DB        │
+        │   epub: supabase_url│
+        └─────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│          USER READS BOOK                     │
+└─────────────────┬───────────────────────────┘
+                  │
+        ┌─────────▼──────────┐
+        │  EpubReaderScreen   │
+        └─────────┬───────────┘
+                  │
+        ┌─────────▼──────────┐
+        │  Fetch book data    │
+        │  from database      │
+        └─────────┬───────────┘
+                  │
+        ┌─────────▼──────────┐
+        │  Is Supabase URL?   │
+        └─────┬───────┬───────┘
+              │       │
+          YES │       │ NO
+              │       │
+    ┌─────────▼───┐   └────► Use IPFS URL
+    │getSignedUrl │           (old books)
+    │(expires 1h) │
+    └─────────┬───┘
+              │
+        ┌─────▼──────────┐
+        │  Load EPUB      │
+        │  with ReactReader│
+        └─────────────────┘
+```
+
+## 🔐 Security Features
+
+1. **Private Bucket** - EPUB tidak bisa diakses public
+2. **Signed URLs** - Temporary access (1 jam)
+3. **Authenticated Access** - Hanya user yang login
+4. **Row Level Security** - Database policies
+
+## 💡 Tips
+
+1. **Test dengan 1 book dulu** sebelum migrate all
+2. **Keep IPFS files** untuk beberapa waktu sebagai backup
+3. **Monitor storage usage** di Supabase Dashboard
+4. **Verify migration** dengan test read di web app
+
+## 📖 Dokumentasi Lengkap
+
+- [SUPABASE_STORAGE_INTEGRATION.md](SUPABASE_STORAGE_INTEGRATION.MD) - Complete setup guide
+- [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Migration walkthrough
+- [scripts/README.md](scripts/README.md) - Scripts documentation
+
+## 🆘 Support
+
+Jika ada masalah:
+
+1. Check browser console untuk error messages
+2. Run `npm run test:supabase` untuk diagnose
+3. Check Supabase Dashboard logs
+4. Review dokumentasi di file-file markdown
 
 ---
 
-## File Organization Structure
+**Status**: ✅ Ready to use!
 
-EPUBs will be organized by book ID:
-
-```
-libere-books/
-├── 1/
-│   └── book.epub
-├── 2/
-│   └── book.epub
-├── 3/
-│   └── book.epub
-└── ...
-```
-
-**Why this structure?**
-- Easy to locate files by `bookId`
-- Supports future expansion (e.g., multiple formats per book)
-- Clean organization for backups
-
----
-
-## Security Considerations
-
-### ✅ What's Protected:
-- EPUBs are **not publicly accessible** (require authentication)
-- Signed URLs **expire after 1 hour** (time-limited access)
-- RLS policies ensure only authenticated users can access files
-- Bucket policies can be updated without code changes
-
-### ⚠️ What's NOT Protected (Yet):
-- Any authenticated Supabase user can read any EPUB (Phase 2 will add ownership verification)
-- No rate limiting on signed URL generation (can be added via Edge Functions)
-- No audit logging of file access (can enable via Supabase logs)
-
-**These will be addressed in Phase 2 with JWT ownership tokens.**
-
----
-
-## Troubleshooting
-
-### Issue: "Permission denied" on upload
-
-**Solution:** Verify RLS policies are active:
-```sql
-SELECT * FROM pg_policies WHERE tablename = 'objects' AND schemaname = 'storage';
-```
-
-### Issue: "Bucket not found"
-
-**Solution:** Verify bucket exists:
-```sql
-SELECT * FROM storage.buckets WHERE id = 'libere-books';
-```
-
-### Issue: Signed URL returns 404
-
-**Solution:** Verify file exists in bucket:
-```sql
-SELECT * FROM storage.objects WHERE bucket_id = 'libere-books';
-```
-
----
-
-## Next Steps
-
-After completing this setup:
-
-1. ✅ **Phase 0.2:** Run the migration script to move existing EPUBs from IPFS to Supabase
-2. ✅ **Phase 0.3:** Update admin-publish tool to upload new EPUBs to Supabase
-3. ✅ **Phase 0.4:** Update EpubReaderScreen to load from Supabase signed URLs
-
----
-
-## Cleanup (If Needed)
-
-To delete the bucket and start over:
-
-```sql
--- Delete all files in bucket
-DELETE FROM storage.objects WHERE bucket_id = 'libere-books';
-
--- Delete all policies
-DROP POLICY "Authenticated users can read EPUBs" ON storage.objects;
-DROP POLICY "Authenticated users can upload EPUBs" ON storage.objects;
-DROP POLICY "Authenticated users can update EPUBs" ON storage.objects;
-DROP POLICY "Authenticated users can delete EPUBs" ON storage.objects;
-
--- Delete bucket
-DELETE FROM storage.buckets WHERE id = 'libere-books';
-```
-
----
-
-## Resources
-
-- [Supabase Storage Documentation](https://supabase.com/docs/guides/storage)
-- [Row Level Security Guide](https://supabase.com/docs/guides/auth/row-level-security)
-- [Signed URLs Documentation](https://supabase.com/docs/guides/storage/serving/downloads#authenticated-downloads)
+**Next Step**: Setup Supabase bucket → Run test → Migrate books

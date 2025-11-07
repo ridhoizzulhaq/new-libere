@@ -1,9 +1,3 @@
----
-noteId: "79566120b7f511f08d56a990e7f97797"
-tags: []
-
----
-
 # Publish Book dengan USDC - Implementation Guide
 
 ## Overview
@@ -20,8 +14,9 @@ Menu Publish Book telah diubah untuk menggunakan USDC sebagai mata uang pricing,
   - ERC20 ABI untuk token operations
 
 #### File yang Dimodifikasi:
-- **Book Publishing** (now handled by `admin-publish/` tool)
+- **`src/pages/CreateBookV2Screen.tsx`**
   - Menghilangkan dependency ke ETH_PRICE
+  - Menghilangkan state `ethAmount` dan `ethPrice`
   - Update pricing logic dari ETH (18 decimals) ke USDC (6 decimals)
   - Update UI labels dari "USD" ke "USDC"
 

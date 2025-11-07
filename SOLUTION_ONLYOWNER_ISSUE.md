@@ -1,9 +1,3 @@
----
-noteId: "53a38020b7f511f08d56a990e7f97797"
-tags: []
-
----
-
 # Solution: onlyOwner Modifier Issue
 
 ## Problem
@@ -137,7 +131,34 @@ app.listen(3000, () => console.log('Server running on port 3000'));
 
 #### Frontend Update:
 
-Use the `admin-publish/` tool instead of the main web application for publishing books with the owner wallet.
+```typescript
+// CreateBookV2Screen.tsx
+
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // ... existing code for IPFS upload ...
+
+  // Instead of calling smart contract directly
+  setLoadingMessage("Creating book on blockchain...");
+
+  // Call backend API
+  const response = await axios.post('http://localhost:3000/api/publish-book', {
+    id: id,
+    price: priceInUSDC,
+    recipient: client.account.address,
+    royaltyRecipient: client.account.address,
+    royaltyBps: royaltyPercent,
+    metadataUri: metadataUri,
+  });
+
+  if (!response.data.success) {
+    throw new Error('Failed to create book on blockchain');
+  }
+
+  const tx = response.data.transactionHash;
+
+  // ... continue with database save ...
+};
+```
 
 **Advantages:**
 - ✅ No smart contract changes needed
