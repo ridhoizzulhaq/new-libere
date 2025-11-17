@@ -226,7 +226,7 @@ const BookselfScreen = () => {
           </div>
         </section>
       </div>
-      <div className="w-full h-fit flex items-center justify-center mt-16">
+      <div className="w-full h-fit flex items-center justify-center mt-12">
         <section className="w-full max-w-screen-xl px-6">
           <BookselfBookList key={refreshKey} books={nftBooks} isLoading={loading} />
         </section>

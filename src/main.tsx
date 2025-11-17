@@ -12,6 +12,7 @@ import LibraryListScreen from "./pages/LibraryListScreen.tsx";
 import LibraryDetailScreen from "./pages/LibraryDetailScreen.tsx";
 import BookselfScreen from "./pages/BookselfScreen.tsx";
 import EpubReaderScreen from "./pages/EpubReaderScreen.tsx";
+import PdfReaderScreen from "./pages/PdfReaderScreen.tsx";
 import { CurrencyProvider } from "./contexts/CurrencyContext.tsx";
 import ProtectedRoute from "./routes/ProtectedRoute.tsx";
 import { registerSW } from "virtual:pwa-register";
@@ -66,6 +67,7 @@ createRoot(document.getElementById("root")!).render(
             {/* Temporarily hidden - Publish Book route */}
             {/* <Route path="/publish" element={<CreateBookV2Screen />} /> */}
             <Route path="/read-book/:id" element={<EpubReaderScreen />} />
+            <Route path="/read-pdf/:id" element={<PdfReaderScreen />} />
           </Route>
 
           {/* Fallback redirect */}

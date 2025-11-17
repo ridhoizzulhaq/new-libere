@@ -111,7 +111,7 @@ const Navbar = () => {
       <div className="flex items-center justify-between max-w-screen-xl mx-auto px-4 sm:px-6">
         {/* Logo */}
         <a href="/books" className="flex items-center gap-2 shrink-0">
-          <img src="/images/libere-logo.png" alt="Libere" className="h-6 sm:h-7 md:h-8" />
+          <img src="/images/Logotype and Mark Green Platform (2).png" alt="Libere" className="h-6 sm:h-7 md:h-8" />
         </a>
 
         {/* Desktop Navigation */}
