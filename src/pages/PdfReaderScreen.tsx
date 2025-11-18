@@ -61,21 +61,22 @@ const PdfReaderScreen = () => {
           abi: contractABI,
           functionName: 'balanceOf',
           args: [userAddress, tokenId],
-        });
+        }) as bigint;
 
         const owns = balance > 0n;
         console.log(`✅ [Access] NFT Balance: ${balance.toString()}, Owns: ${owns}`);
         setOwnsNFT(owns);
 
         // Check library borrowing
+        let activeBorrows: any[] = [];
         if (!owns) {
           console.log('🔍 [Access] Checking library borrow status...');
-          const activeBorrows = await publicClient.readContract({
+          activeBorrows = await publicClient.readContract({
             address: libraryPoolAddress,
             abi: libraryPoolABI,
             functionName: 'getActiveBorrows',
             args: [userAddress],
-          });
+          }) as any[];
 
           const borrowed = Array.isArray(activeBorrows) && activeBorrows.some(
             (borrow: any) => Number(borrow.tokenId) === Number(bookId)
@@ -276,7 +277,7 @@ const PdfReaderScreen = () => {
       </div>
 
       {/* Watermark Overlay */}
-      <WatermarkOverlay userEmail={user?.email?.address || user?.google?.email || 'Anonymous'} />
+      <WatermarkOverlay isEnabled={true} />
 
       {/* PDF Viewer */}
       {pdfUrl && (

@@ -11,6 +11,7 @@ interface Book {
   addressReciepent: string;
   addressRoyaltyRecipient: string;
   quantity?: number; // Optional - only present in bookshelf
+  fileType?: 'epub' | 'pdf'; // File type: EPUB or PDF (optional, defaults to 'epub' for backward compatibility)
 }
 
 interface AuthCredentials {
