@@ -10,6 +10,7 @@ const baseUrl = config.env.supabase.baseUrl;
 const HomeScreen = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [featuredBook, setFeaturedBook] = useState<Book | null>(null);
 
   // Removed auth redirect - allow guests to browse store
 
@@ -26,10 +27,21 @@ const HomeScreen = () => {
         const data = await res.json();
 
         setBooks(data);
+
+        // Set featured book to "Matamorfosa" (ID: 1764747979)
+        const metamorfosa = data.find((book: Book) => book.id === 1764747979);
+        if (metamorfosa) {
+          setFeaturedBook(metamorfosa);
+        } else {
+          // Fallback to first book if Matamorfosa not found
+          setFeaturedBook(data[0] || null);
+        }
+
         setLoading(false);
       } catch (err) {
         console.error("Failed to get Books Data", err);
         setBooks([]);
+        setFeaturedBook(null);
         setLoading(false);
       }
     };
@@ -40,7 +52,7 @@ const HomeScreen = () => {
     <HomeLayout>
       {/* Featured Hero Section */}
       <div className="w-full h-full flex flex-col items-center justify-center mt-16">
-        {!loading && books.length > 0 && <FeaturedHero book={books[0]} />}
+        {!loading && featuredBook && <FeaturedHero book={featuredBook} />}
       </div>
 
       {/* Book List Section */}

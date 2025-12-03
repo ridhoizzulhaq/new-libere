@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import BookEpubReaderButton from "../BookEpubReaderButton";
+import AudiobookButton from "../AudiobookButton";
 import GoToCommunityButton from "./GoToCommunityButton";
 import BookselfTxButton from "./BookselfTxButton";
 
@@ -178,6 +179,7 @@ const BookselfBookCard = ({ book, client }: Props) => {
 
           <div className="w-full flex flex-col items-center gap-1.5 mt-auto pt-3">
             <BookEpubReaderButton book={book} />
+            {book.audiobook && <AudiobookButton book={book} />}
             <GoToCommunityButton book={book} />
           </div>
         </div>

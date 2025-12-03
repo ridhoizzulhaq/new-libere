@@ -8,21 +8,14 @@ interface Props {
 /**
  * Universal Book Reader Button
  * Supports both EPUB and PDF formats
- * Navigates to appropriate reader based on book.fileType
+ * DocumentReaderScreen will auto-detect file type
  */
 const BookEpubReaderButton = ({ book }: Props) => {
   const navigate = useNavigate();
 
   const onReadBook = () => {
-    // Determine reader route based on file type
-    // Default to EPUB for backward compatibility
-    const fileType = book.fileType || 'epub';
-
-    if (fileType === 'pdf') {
-      navigate(`/read-pdf/${book.id}`);
-    } else {
-      navigate(`/read-book/${book.id}`);
-    }
+    // Always use unified route - DocumentReaderScreen will auto-detect type
+    navigate(`/read-book/${book.id}`);
   };
 
   return (

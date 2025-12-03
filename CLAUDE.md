@@ -23,7 +23,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Storage**: Pinata (IPFS) for book files, Supabase for metadata & EPUB storage
 - **Ethereum Libraries**: viem v2 + ethers v6 + permissionless
 - **PWA**: Progressive Web App with offline support via Vite PWA plugin
-- **EPUB Reader**: react-reader for displaying EPUB books with custom watermark overlay
+- **Document Readers**: react-reader for EPUB books, react-pdf for PDF documents, both with custom watermark overlay
 
 ## Smart Contracts
 
@@ -66,6 +66,7 @@ npm run lint
 npm run migrate:epubs      # Migrate EPUB files from IPFS to Supabase Storage
 npm run migrate:simple     # Simple migration utility
 npm run test:supabase      # Test Supabase connection
+npm run sync:libraries     # Sync library NFTs data
 ```
 
 ## Environment Setup
@@ -111,9 +112,10 @@ main.tsx (entry point) → PrivyProvider (auth) → CurrencyProvider → Browser
 - `/books/:id` → BookDetailScreen (view book details + purchase/donate)
 
 **Protected Routes** (requires Privy authentication):
-- `/libraries` → LibraryScreen (browse library books + borrow)
+- `/libraries` → LibraryListScreen (browse all libraries)
+- `/libraries/:id` → LibraryDetailScreen (view library details + browse/borrow books)
 - `/bookselfs` → BookselfScreen (user's owned + borrowed books)
-- `/read-book/:id` → EpubReaderScreen (read EPUB with watermark)
+- `/read-book/:id` → DocumentReaderScreen (unified reader for EPUB/PDF with watermark and NFT verification)
 
 **Temporarily Hidden:**
 - `/publish` → CreateBookV2Screen (publish new books - currently disabled due to onlyOwner contract restriction)
@@ -152,12 +154,13 @@ interface Book {
   publisher: string;
   description: string;
   metadataUri: string;           // IPFS cover image URL
-  epub: string;                  // IPFS EPUB file URL
+  epub: string;                  // Document file URL (EPUB or PDF) - misleading name!
   priceEth: string;              // USDC price (6 decimals) - misleading name!
   royalty: number;               // Basis points (500 = 5%)
   addressReciepent: string;      // Payment recipient
   addressRoyaltyRecipient: string;
   quantity?: number;             // NFT balance (for bookshelf)
+  fileType?: 'epub' | 'pdf';     // Document type (optional, defaults to 'epub')
 }
 ```
 
@@ -342,12 +345,15 @@ const balance = await readContract(publicClient, {
 
 ### IPFS Integration
 
-Books are stored on IPFS via Pinata:
+Books are stored on IPFS via Pinata (legacy) or Supabase Storage (current):
 - **Cover images**: Uploaded as PNG/JPG
-- **EPUB files**: Uploaded as .epub
-- **URLs**: `https://gateway.pinata.cloud/ipfs/{hash}`
+- **Document files**: EPUB or PDF format
+- **IPFS URLs**: `https://gateway.pinata.cloud/ipfs/{hash}` (legacy)
+- **Supabase URLs**: `https://{project}.supabase.co/storage/v1/object/public/libere-books/{filename}`
 
 Access Pinata credentials from `config.env.pinata` ([src/libs/config.ts](src/libs/config.ts)).
+
+**Document Type Detection**: The system auto-detects file types (EPUB vs PDF) from URLs using [src/utils/documentType.ts](src/utils/documentType.ts).
 
 ### Supabase Integration
 
@@ -366,20 +372,49 @@ const { data, error } = await supabase
   .single();
 ```
 
-## Admin Publishing Tool
+## Document Reader Implementation
 
-Located in `admin-publish/` directory - a standalone Vite app for publishing books:
+### Unified Document Reader
+The app uses [DocumentReaderScreen](src/pages/DocumentReaderScreen.tsx) as a unified entry point for reading both EPUB and PDF files:
 
-**Setup:**
-```bash
-cd admin-publish
-npm install
-npm run dev
+**How it works:**
+1. Verifies NFT ownership OR library borrowing access via smart contract
+2. Fetches book metadata from Supabase
+3. Auto-detects file type (EPUB or PDF) from URL
+4. Downloads document from Supabase Storage with authentication
+5. Routes to appropriate renderer:
+   - EPUB → [EpubReaderScreen](src/pages/EpubReaderScreen.tsx) (uses react-reader)
+   - PDF → [PdfRenderer](src/pages/PdfRenderer.tsx) (uses react-pdf)
+
+**Access Verification:**
+```typescript
+// Checks both NFT ownership AND library borrowing
+const balance = await publicClient.readContract({
+  address: contractAddress,
+  abi: contractABI,
+  functionName: 'balanceOf',
+  args: [userAddress, tokenId],
+});
+
+const usableBalance = await publicClient.readContract({
+  address: libraryPoolAddress,
+  abi: libraryPoolABI,
+  functionName: 'usableBalanceOf',
+  args: [userAddress, tokenId],
+});
+
+// User has access if EITHER balance > 0 OR usableBalance > 0
 ```
 
-**Important**: Requires owner private key in `.env`. Only for local development - never deploy to production.
+### Watermark Overlay
+Both readers include [WatermarkOverlay](src/components/reader/WatermarkOverlay.tsx) that displays:
+- User's wallet address (prevents screenshot sharing)
+- Borrow expiry countdown (for borrowed books)
+- Diagonal repeating pattern for security
 
-See [admin-publish/README.md](admin-publish/README.md) for detailed instructions.
+## Admin Publishing Tool
+
+**Note**: The admin-publish directory does not exist in the current codebase. Publishing is currently disabled due to the `onlyOwner` contract restriction. See [SOLUTION_ONLYOWNER_ISSUE.md](SOLUTION_ONLYOWNER_ISSUE.md) for workarounds.
 
 ## Progressive Web App (PWA)
 
@@ -390,15 +425,15 @@ The app is configured as a PWA with offline support and can be installed on devi
 - **Offline Caching**: Images and API responses cached for offline access
 - **Installable**: Can be installed as standalone app on desktop/mobile
 - **Workbox Caching Strategies**:
-  - EPUB files: NetworkOnly (NEVER cached for security - prevents unauthorized offline access)
+  - Document files (EPUB/PDF): NetworkOnly (NEVER cached for security - prevents unauthorized offline access)
   - Supabase signed URLs: NetworkOnly (expire quickly, should not be cached)
   - Supabase API: NetworkFirst (5 min cache)
   - IPFS/Pinata images: CacheFirst (24 hour cache)
 
 ### PWA Configuration
-Located in [vite.config.ts](vite.config.ts) using `vite-plugin-pwa`. Service worker registers automatically in [main.tsx](src/main.tsx:16-30).
+Located in [vite.config.ts](vite.config.ts) using `vite-plugin-pwa`. Service worker registers automatically in [main.tsx](src/main.tsx:17-47).
 
-**Security Note**: EPUB files are intentionally excluded from caching to prevent unauthorized offline access. Users can only read books while authenticated and with valid access rights.
+**Security Note**: Both EPUB and PDF files are intentionally excluded from caching to prevent unauthorized offline access. Users can only read books while authenticated and with valid access rights.
 
 ## Utility Scripts
 

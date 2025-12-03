@@ -22,6 +22,7 @@ const PdfReaderScreen = () => {
   console.log("📖 [PDF Reader] Book ID from params:", bookId, "Type:", typeof bookId);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(0);
   const [ownsNFT, setOwnsNFT] = useState<boolean | null>(null);
   const [hasBorrowed, setHasBorrowed] = useState<boolean | null>(null);
   const [borrowExpiry, setBorrowExpiry] = useState<number | null>(null);
@@ -199,6 +200,34 @@ const PdfReaderScreen = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     localStorage.setItem(`pdf-page-${bookId}`, page.toString());
+
+    // Calculate and save progress percentage (same key as EPUB for consistency)
+    if (totalPages > 0) {
+      const progressPercent = Math.round((page / totalPages) * 100);
+      localStorage.setItem(`book-progress-${bookId}`, progressPercent.toString());
+
+      console.log(`💾 [PDF Progress] Saved: ${progressPercent}% (page ${page}/${totalPages})`);
+
+      // Dispatch progress update event (for real-time bookshelf updates)
+      window.dispatchEvent(new CustomEvent('progressUpdate', {
+        detail: { bookId, progress: progressPercent }
+      }));
+    }
+  };
+
+  const handlePdfLoad = (numPages: number) => {
+    setTotalPages(numPages);
+    console.log(`📄 [PDF] Loaded ${numPages} pages`);
+
+    // Recalculate progress if we're on a saved page
+    if (currentPage > 0 && numPages > 0) {
+      const progressPercent = Math.round((currentPage / numPages) * 100);
+      localStorage.setItem(`book-progress-${bookId}`, progressPercent.toString());
+
+      window.dispatchEvent(new CustomEvent('progressUpdate', {
+        detail: { bookId, progress: progressPercent }
+      }));
+    }
   };
 
   const toggleBookmark = () => {
@@ -284,6 +313,7 @@ const PdfReaderScreen = () => {
         <PdfViewer
           pdfUrl={pdfUrl}
           onPageChange={handlePageChange}
+          onPdfLoad={handlePdfLoad}
           initialPage={currentPage}
         />
       )}

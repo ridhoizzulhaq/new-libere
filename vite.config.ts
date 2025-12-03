@@ -35,8 +35,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit for large JS bundles
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2,mp3}"],
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB limit for audiobooks
         runtimeCaching: [
           {
             // SECURITY: EPUB files should NEVER be cached for security
@@ -88,6 +88,21 @@ export default defineConfig({
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 86400, // 24 hours
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
+            // Audiobook files - cache for offline playback
+            urlPattern: /.*\.mp3$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "audiobook-cache",
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 604800, // 7 days
               },
               cacheableResponse: {
                 statuses: [0, 200],

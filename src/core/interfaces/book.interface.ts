@@ -12,4 +12,5 @@ export interface Book {
     addressRoyaltyRecipient: string;
     quantity?: number; // Jumlah NFT yang dimiliki (optional, hanya ada di bookshelf)
     fileType?: 'epub' | 'pdf'; // File type: EPUB or PDF (optional, defaults to 'epub' for backward compatibility)
+    audiobook?: string; // URL to audiobook file (MP3) - optional
 }

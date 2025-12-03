@@ -6,6 +6,7 @@
  */
 
 import { supabase } from '../libs/supabase';
+import { detectDocumentType, type DocumentType } from './documentType';
 
 const BOOK_BUCKET = 'libere-books';
 const SIGNED_URL_EXPIRY = 300; // 5 minutes in seconds (reduced from 1 hour for security)
@@ -237,8 +238,8 @@ export function isSupabaseStorageUrl(url: string): boolean {
     return true;
   }
 
-  // Check for storage path format: libere-books/{bookId}/book.epub
-  if (url.startsWith('libere-books/') && url.endsWith('/book.epub')) {
+  // Check for storage path format: libere-books/{bookId}/book.{extension}
+  if (url.startsWith('libere-books/') && (url.endsWith('/book.epub') || url.endsWith('/book.pdf'))) {
     console.log('✅ [isSupabaseStorageUrl] Detected as storage path');
     return true;
   }
@@ -369,7 +370,7 @@ export async function uploadPdf(bookId: number, pdfFile: File | Blob): Promise<s
     const { error } = await supabase.storage
       .from(BOOK_BUCKET)
       .upload(filePath, pdfFile, {
-        contentType: 'application/pdf',
+        contentType: 'application/octet-stream', // Generic binary type for compatibility with Supabase
         cacheControl: '3600', // Cache for 1 hour
         upsert: false,
       });
@@ -493,4 +494,60 @@ export function getPdfStorageUrl(bookId: number): string {
     .getPublicUrl(filePath);
 
   return data.publicUrl;
+}
+
+// =============================================================
+// 📚 UNIFIED DOCUMENT FUNCTIONS (EPUB + PDF)
+// =============================================================
+
+/**
+ * Download document (EPUB or PDF) as a Blob with auto-detection
+ * Used by DocumentReaderScreen for unified document loading
+ *
+ * @param bookId - The book ID
+ * @param documentPath - Optional document path for type detection
+ * @returns Object with blob and detected type, or null if error
+ */
+export async function downloadDocumentBlob(
+  bookId: number,
+  documentPath?: string
+): Promise<{ blob: Blob; type: DocumentType } | null> {
+  try {
+    // Detect document type from path
+    const docInfo = documentPath
+      ? detectDocumentType(documentPath)
+      : { type: 'epub' as DocumentType, extension: '.epub' }; // default to EPUB
+
+    const fileName = `book${docInfo.extension}`;
+    const filePath = `${bookId}/${fileName}`;
+
+    console.log(`[SupabaseStorage] Downloading ${docInfo.type.toUpperCase()} for book ${bookId}`);
+    console.log('   File path:', filePath);
+    console.log('   Starting download from Supabase Storage...');
+
+    const downloadStart = performance.now();
+    const { data, error } = await supabase.storage
+      .from(BOOK_BUCKET) // Same bucket for all documents
+      .download(filePath);
+    const downloadEnd = performance.now();
+
+    if (error || !data) {
+      console.error(`[SupabaseStorage] Failed to download ${docInfo.type}:`, error);
+      return null;
+    }
+
+    const downloadTime = (downloadEnd - downloadStart) / 1000;
+    const fileSizeMB = data.size / 1024 / 1024;
+    const speedMBps = fileSizeMB / downloadTime;
+
+    console.log(`✅ [SupabaseStorage] Downloaded ${docInfo.type}`);
+    console.log(`   File size: ${fileSizeMB.toFixed(2)} MB`);
+    console.log(`   ⏱️ Download time: ${downloadTime.toFixed(2)} seconds`);
+    console.log(`   📊 Download speed: ${speedMBps.toFixed(2)} MB/s`);
+
+    return { blob: data, type: docInfo.type };
+  } catch (error) {
+    console.error(`[SupabaseStorage] Error downloading document:`, error);
+    return null;
+  }
 }

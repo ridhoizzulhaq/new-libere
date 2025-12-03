@@ -11,8 +11,8 @@ import { Buffer } from 'buffer';
 import LibraryListScreen from "./pages/LibraryListScreen.tsx";
 import LibraryDetailScreen from "./pages/LibraryDetailScreen.tsx";
 import BookselfScreen from "./pages/BookselfScreen.tsx";
-import EpubReaderScreen from "./pages/EpubReaderScreen.tsx";
-import PdfReaderScreen from "./pages/PdfReaderScreen.tsx";
+import DocumentReaderScreen from "./pages/DocumentReaderScreen.tsx";
+import AudiobookPlayerScreen from "./pages/AudiobookPlayerScreen.tsx";
 import { CurrencyProvider } from "./contexts/CurrencyContext.tsx";
 import ProtectedRoute from "./routes/ProtectedRoute.tsx";
 import { registerSW } from "virtual:pwa-register";
@@ -66,8 +66,12 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/bookselfs" element={<BookselfScreen />} />
             {/* Temporarily hidden - Publish Book route */}
             {/* <Route path="/publish" element={<CreateBookV2Screen />} /> */}
-            <Route path="/read-book/:id" element={<EpubReaderScreen />} />
-            <Route path="/read-pdf/:id" element={<PdfReaderScreen />} />
+            {/* Unified reader for both EPUB and PDF - auto-detects type */}
+            <Route path="/read-book/:id" element={<DocumentReaderScreen />} />
+            {/* Old PDF route redirects to unified reader for backward compatibility */}
+            <Route path="/read-pdf/:id" element={<Navigate to="/read-book/:id" replace />} />
+            {/* Audiobook player - protected route */}
+            <Route path="/listen-audiobook/:id" element={<AudiobookPlayerScreen />} />
           </Route>
 
           {/* Fallback redirect */}
