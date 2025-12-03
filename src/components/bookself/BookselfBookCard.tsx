@@ -6,7 +6,7 @@ import GoToCommunityButton from "./GoToCommunityButton";
 import BookselfTxButton from "./BookselfTxButton";
 
 interface Props {
-  book: Book;
+  book: Book & { audiobook?: boolean };
   client: any;
   clientPublic: any;
 }
